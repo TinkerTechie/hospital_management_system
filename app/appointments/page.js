@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "../components/shared/Navbar";
 import Swal from "sweetalert2";
 import Image from "next/image";
@@ -7,6 +8,29 @@ import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 
 export default function AppointmentPage() {
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+
+  // ✅ Step 1: Check if user is logged in
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) {
+      Swal.fire({
+        title: "Login Required",
+        text: "Please log in to book an appointment.",
+        icon: "info",
+        confirmButtonText: "Go to Login",
+        confirmButtonColor: "#00796B",
+      }).then(() => {
+        router.push("/login");
+      });
+    } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setUser(JSON.parse(storedUser));
+    }
+  }, [router]);
+
+  // ✅ Step 2: Appointment form state
   const [appointment, setAppointment] = useState({
     patient: "",
     phone: "",
@@ -18,6 +42,18 @@ export default function AppointmentPage() {
     city: "",
   });
 
+  // ✅ Auto-fill user name and email once user loads
+  useEffect(() => {
+    if (user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setAppointment((prev) => ({
+        ...prev,
+        patient: user.name || "",
+        email: user.email || "",
+      }));
+    }
+  }, [user]);
+
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.2 });
 
   const handleChange = (e) => {
@@ -26,57 +62,55 @@ export default function AppointmentPage() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    const res = await fetch("/api/appointments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(appointment),
-    });
-
-    const data = await res.json();
-
-    if (data.success) {
-      Swal.fire({
-        title: "Appointment Booked!",
-        text: "Your appointment has been saved successfully.",
-        icon: "success",
-        confirmButtonColor: "#00796B",
+    try {
+      const res = await fetch("/api/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(appointment),
       });
 
-      // reset form
-      setAppointment({
-        patient: "",
-        phone: "",
-        appointmentDate: "",
-        time: "",
-        doctor: "",
-        reason: "",
-        email: "",
-        city: "",
-      });
-    } else {
+      const data = await res.json();
+
+      if (data.success) {
+        Swal.fire({
+          title: "Appointment Booked!",
+          text: "Your appointment has been saved successfully.",
+          icon: "success",
+          confirmButtonColor: "#00796B",
+        });
+
+        setAppointment({
+          patient: user?.name || "",
+          phone: "",
+          appointmentDate: "",
+          time: "",
+          doctor: "",
+          reason: "",
+          email: user?.email || "",
+          city: "",
+        });
+      } else {
+        Swal.fire({
+          title: "Error",
+          text: data.error || "Failed to book appointment.",
+          icon: "error",
+          confirmButtonColor: "#00796B",
+        });
+      }
+    } catch (error) {
+      console.error(error);
       Swal.fire({
-        title: "Error",
-        text: data.error || "Failed to book appointment.",
+        title: "Server Error",
+        text: "Unable to connect to the server.",
         icon: "error",
         confirmButtonColor: "#00796B",
       });
     }
-  } catch (error) {
-    console.error(error);
-    Swal.fire({
-      title: "Server Error",
-      text: "Unable to connect to the server.",
-      icon: "error",
-      confirmButtonColor: "#00796B",
-    });
-  }
-};
+  };
 
-
-  // ✅ use /assets/... paths (no imports from public folder)
+  // ✅ Images
   const appoint = "/assets/appoint.png";
   const doct1 = "/assets/doct1.jpg";
   const doct2 = "/assets/doct2.jpg";
@@ -127,25 +161,42 @@ export default function AppointmentPage() {
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {["patient", "phone", "email", "city"].map((field) => (
-              <input
-                key={field}
-                type={field === "email" ? "email" : "text"}
-                name={field}
-                placeholder={
-                  field === "patient"
-                    ? "Full Name"
-                    : field === "phone"
-                    ? "Phone Number"
-                    : field === "email"
-                    ? "Email Address"
-                    : "City"
-                }
-                onChange={handleChange}
-                className="border rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#00796B]"
-                required
-              />
-            ))}
+            <input
+              type="text"
+              name="patient"
+              value={appointment.patient}
+              placeholder="Full Name"
+              onChange={handleChange}
+              className="border rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#00796B]"
+              required
+              readOnly={!!user?.name}
+            />
+            <input
+              type="email"
+              name="email"
+              value={appointment.email}
+              placeholder="Email Address"
+              onChange={handleChange}
+              className="border rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#00796B]"
+              required
+              readOnly={!!user?.email}
+            />
+            <input
+              type="text"
+              name="phone"
+              placeholder="Phone Number"
+              onChange={handleChange}
+              className="border rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#00796B]"
+              required
+            />
+            <input
+              type="text"
+              name="city"
+              placeholder="City"
+              onChange={handleChange}
+              className="border rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#00796B]"
+              required
+            />
             <input
               type="date"
               name="appointmentDate"

@@ -1,28 +1,35 @@
-'use client';
+"use client";
+import Link from "next/link";
+import { signIn } from "next-auth/react";
 
-import React, { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff, Loader2, LogIn } from 'lucide-react';
-import Image from 'next/image';
-
+import React, { useState } from "react";
+import { Mail, Lock, Eye, EyeOff, Loader2, LogIn } from "lucide-react";
+import Image from "next/image";
+// 🧩 Redux imports (added safely)
+import { useDispatch } from "react-redux";
+import { login } from "../../src/redux/UserSlice";
 export default function LoginForm({ onSwitch }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState("");
+
+  // 🧩 Redux dispatch setup
+  const dispatch = useDispatch();
 
   const validateEmail = (email) => /\S+@\S+\.\S+/.test(email);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setErrorMsg('');
+    setErrorMsg("");
 
     if (!validateEmail(email)) {
-      setErrorMsg('Please enter a valid email address.');
+      setErrorMsg("Please enter a valid email address.");
       return;
     }
     if (!password) {
-      setErrorMsg('Please enter your password.');
+      setErrorMsg("Please enter your password.");
       return;
     }
 
@@ -43,9 +50,12 @@ export default function LoginForm({ onSwitch }) {
       }
 
       alert(`Welcome ${data.user.name}! Role: ${data.user.role}`);
+
+      // 🧩 Redux action dispatch — added safely
+      dispatch(login(data.user));
     } catch (err) {
       console.error(err);
-      setErrorMsg('Login failed. Please try again later.');
+      setErrorMsg("Login failed. Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -55,9 +65,18 @@ export default function LoginForm({ onSwitch }) {
     <div className="max-w-sm mx-auto bg-white rounded-2xl shadow-lg p-8 space-y-6 border border-gray-100 mt-10 sm:mt-20">
       {/* Logo */}
       <div className="flex flex-col items-center">
-        <Image src="/assets/logo.png" alt="Hospital Logo" width={70} height={70} />
-        <h2 className="text-2xl font-semibold text-gray-800 mt-3">Welcome Back</h2>
-        <p className="text-gray-500 text-sm">Login to continue to HospitalNext</p>
+        <Image
+          src="/assets/logo.png"
+          alt="Hospital Logo"
+          width={70}
+          height={70}
+        />
+        <h2 className="text-2xl font-semibold text-gray-800 mt-3">
+          Welcome Back
+        </h2>
+        <p className="text-gray-500 text-sm">
+          Login to continue to HospitalNext
+        </p>
       </div>
 
       {/* Error Message */}
@@ -70,7 +89,10 @@ export default function LoginForm({ onSwitch }) {
       <form onSubmit={handleLogin} className="space-y-5">
         {/* Email */}
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Email Address
           </label>
           <div className="relative">
@@ -89,14 +111,17 @@ export default function LoginForm({ onSwitch }) {
 
         {/* Password */}
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Password
           </label>
           <div className="relative">
             <Lock className="absolute left-3 top-3.5 text-gray-400 h-5 w-5" />
             <input
               id="password"
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
               className="w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
               value={password}
@@ -107,7 +132,7 @@ export default function LoginForm({ onSwitch }) {
               type="button"
               className="absolute right-3 top-3.5 text-gray-500"
               onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -117,15 +142,19 @@ export default function LoginForm({ onSwitch }) {
         {/* Remember & Forgot */}
         <div className="flex items-center justify-between text-sm text-gray-600">
           <label className="flex items-center space-x-2">
-            <input type="checkbox" className="h-4 w-4 text-green-600 border-gray-300 rounded" />
+            <input
+              type="checkbox"
+              className="h-4 w-4 text-green-600 border-gray-300 rounded"
+            />
             <span>Remember me</span>
           </label>
-          <button
-            type="button"
+
+          <Link
+            href="/forgot-password"
             className="text-green-600 hover:underline focus:outline-none"
           >
             Forgot password?
-          </button>
+          </Link>
         </div>
 
         {/* Submit Button */}
@@ -133,11 +162,15 @@ export default function LoginForm({ onSwitch }) {
           type="submit"
           disabled={loading}
           className={`w-full flex items-center justify-center py-2 px-4 bg-green-600 text-white font-semibold rounded-lg transition-all duration-200 hover:bg-green-700 focus:ring-2 focus:ring-green-400 focus:outline-none ${
-            loading ? 'opacity-70 cursor-not-allowed' : ''
+            loading ? "opacity-70 cursor-not-allowed" : ""
           }`}
         >
-          {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <LogIn className="mr-2 h-5 w-5" />}
-          {loading ? 'Logging in...' : 'Login'}
+          {loading ? (
+            <Loader2 className="animate-spin h-5 w-5" />
+          ) : (
+            <LogIn className="mr-2 h-5 w-5" />
+          )}
+          {loading ? "Logging in..." : "Login"}
         </button>
 
         {/* Social Login */}
@@ -149,6 +182,7 @@ export default function LoginForm({ onSwitch }) {
 
         <button
           type="button"
+          onClick={() => signIn("google")}
           className="w-full flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
         >
           <Image
@@ -163,7 +197,7 @@ export default function LoginForm({ onSwitch }) {
 
         {/* Sign up prompt */}
         <p className="text-center text-sm text-gray-600">
-          Don’t have an account?{' '}
+          Don’t have an account?{" "}
           <button
             type="button"
             onClick={onSwitch}

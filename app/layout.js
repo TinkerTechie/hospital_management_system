@@ -1,4 +1,5 @@
 import "./globals.css";
+import { ReduxProvider } from "./providers";
 
 export const metadata = {
   title: "HospitalNext",
@@ -8,12 +9,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      {/*
-        This body tag is the main one for the whole site.
-        It's minimal so it doesn't interfere with your
-        landing page or your main app layout.
-      */}
-      <body>{children}</body>
+      <body>
+        <ReduxProvider>{children}</ReduxProvider>
+      </body>
     </html>
   );
 }

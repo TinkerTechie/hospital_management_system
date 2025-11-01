@@ -118,20 +118,22 @@ model Nurse {
 // APPOINTMENT MODEL
 // ----------------------
 model Appointment {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String
-  phone     String
-  date      String
-  doctor    String
-  createdAt DateTime @default(now())
+  id              Int      @id @default(autoincrement())
+  patient         String
+  email           String
+  phone           String
+  appointmentDate String
+  time            String
+  doctor          String?
+  reason          String
+  city            String
+  createdAt       DateTime @default(now())
 
-  doctorId  String?
-  patientId String?
+  Doctor Doctor[]
 
-  doctorRel  Doctor?  @relation(fields: [doctorId], references: [id])
-  patientRel Patient? @relation(fields: [patientId], references: [id])
+  Patient Patient[]
 }
+
 
 // ----------------------
 // CONTACT MESSAGE MODEL
