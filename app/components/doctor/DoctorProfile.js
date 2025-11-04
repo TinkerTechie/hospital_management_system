@@ -53,7 +53,7 @@ export default function DoctorProfile() {
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("/api/doctor/update-profile", {
+      const res = await fetch("/api/doctor", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: userData.id, ...form }),
