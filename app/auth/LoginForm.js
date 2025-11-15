@@ -1,13 +1,12 @@
 "use client";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
-
 import React, { useState } from "react";
 import { Mail, Lock, Eye, EyeOff, Loader2, LogIn } from "lucide-react";
 import Image from "next/image";
-// 🧩 Redux imports (added safely)
 import { useDispatch } from "react-redux";
 import { login } from "../../src/redux/UserSlice";
+
 export default function LoginForm({ onSwitch }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,11 +14,11 @@ export default function LoginForm({ onSwitch }) {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // 🧩 Redux dispatch setup
   const dispatch = useDispatch();
 
   const validateEmail = (email) => /\S+@\S+\.\S+/.test(email);
 
+  // ✅ Updated handleLogin with localStorage + role redirect
   const handleLogin = async (e) => {
     e.preventDefault();
     setErrorMsg("");
@@ -43,19 +42,30 @@ export default function LoginForm({ onSwitch }) {
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        setErrorMsg(data.error || "Incorrect email or password.");
-        setLoading(false);
-        return;
+
+      if (res.ok && data.user) {
+        const user = data.user;
+
+        // 🧩 Save user in Redux + localStorage
+        dispatch(login(user));
+        localStorage.setItem("user", JSON.stringify(user));
+
+        alert(`Welcome ${user.name}! Role: ${user.role}`);
+
+        // ✅ Role-based redirect
+        if (user.role === "DOCTOR") {
+          window.location.href = "/doctor/dashboard";
+        } else if (user.role === "NURSE") {
+          window.location.href = "/nurse/dashboard";
+        } else {
+          window.location.href = "/patient/dashboard";
+        }
+      } else {
+        setErrorMsg(data.error || "Login failed. Please try again.");
       }
-
-      alert(`Welcome ${data.user.name}! Role: ${data.user.role}`);
-
-      // 🧩 Redux action dispatch — added safely
-      dispatch(login(data.user));
-    } catch (err) {
-      console.error(err);
-      setErrorMsg("Login failed. Please try again later.");
+    } catch (error) {
+      console.error("Login error:", error);
+      setErrorMsg("An unexpected error occurred. Please try again later.");
     } finally {
       setLoading(false);
     }

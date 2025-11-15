@@ -1,68 +1,93 @@
 "use client";
-import React from "react";
 import Link from "next/link";
-
-// 🧩 Redux imports (added safely)
+import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../../src/redux/UserSlice";
-
+import { useRouter, usePathname } from "next/navigation";
 
 export default function Navbar() {
-  // 🧩 Get user info from Redux
   const user = useSelector((state) => state.user.user);
   const dispatch = useDispatch();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const handleLogout = () => {
     dispatch(logout());
+    router.push("/login");
   };
 
-  return (
-    <nav className="fixed top-0 left-0 w-full z-50 bg-white/90 backdrop-blur-md shadow-sm">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-        {/* Logo */}
-        <h1 className="text-2xl font-bold text-[#00796B]">HMS</h1>
+  // ❗Hide profile picture on landing page (page.js)
+  const hideProfileOnPages = ["/"]; 
 
-        {/* Links */}
+  const showProfileIcon = 
+    user && 
+    !hideProfileOnPages.includes(pathname);
+
+  return (
+    <nav className="fixed top-0 left-0 w-full z-50 bg-white/90 shadow-sm">
+      <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+
+        <h1
+          className="text-2xl font-bold text-[#00796B] cursor-pointer"
+          onClick={() => router.push("/")}
+        >
+          HMS
+        </h1>
+
         <div className="space-x-6 hidden md:flex">
-          <Link href="/" className="text-gray-700 hover:text-[#00796B] transition">
-            Home
-          </Link>
-          <Link href="/appointments" className="text-gray-700 hover:text-[#00796B] transition">
-            Appointment
-          </Link>
-          <Link href="/about" className="text-gray-700 hover:text-[#00796B] transition">
-            About Us
-          </Link>
-          <Link href="/contact" className="text-gray-700 hover:text-[#00796B] transition">
-            Contact Us
-          </Link>
-          <Link href="/doctor/profile" className="text-gray-700 hover:text-[#00796B] transition">
-            Doctor Profile
-          </Link>
+
+          {/* Always show these links */}
+          <Link href="/" className="hover:text-[#00796B] transition">Home</Link>
+          <Link href="/appointments" className="hover:text-[#00796B] transition">Appointment</Link>
+          <Link href="/about" className="hover:text-[#00796B] transition">About Us</Link>
+          <Link href="/contact" className="hover:text-[#00796B] transition">Contact Us</Link>
+
         </div>
 
-        {/* 🧩 Conditional Section (added safely) */}
-        {user ? (
-          <div className="flex items-center space-x-4">
-            <span className="text-gray-700 font-medium">
-              👋 Hi, {user.name}
-            </span>
+        {/* RIGHT SIDE */}
+        <div className="flex items-center gap-4">
+
+          {/* 🔥 If user is NOT logged in — show LOGIN/SIGNUP */}
+          {!user && (
+            <>
+              <Link
+                href="/login"
+                className="bg-[#00796B] text-white px-5 py-2 rounded-full font-semibold hover:bg-[#00695C] transition"
+              >
+                Login
+              </Link>
+
+              <Link
+                href="/signup"
+                className="border border-[#00796B] text-[#00796B] px-5 py-2 rounded-full font-semibold hover:bg-[#E0F2F1] transition"
+              >
+                Signup
+              </Link>
+            </>
+          )}
+
+          {/* ⭐ If user is logged in AND not on landing page → Show Profile Icon */}
+          {showProfileIcon && (
+            <Image
+              src={user.image || "/assets/default-avatar.png"}
+              width={42}
+              height={42}
+              alt="User Profile"
+              className="rounded-full border-2 border-[#00796B] cursor-pointer"
+              onClick={() => router.push("/profile")}
+            />
+          )}
+
+          {/* If user is logged in → logout button */}
+          {user && (
             <button
               onClick={handleLogout}
               className="bg-red-500 text-white px-4 py-2 rounded-full font-semibold hover:bg-red-600 transition"
             >
               Logout
             </button>
-          </div>
-        ) : (
-          // Existing Login Button (unchanged)
-          <Link
-            href="/login"
-            className="bg-[#00796B] text-white px-5 py-2 rounded-full font-semibold hover:bg-[#00695C] transition"
-          >
-            Login
-          </Link>
-        )}
+          )}
+        </div>
       </div>
     </nav>
   );

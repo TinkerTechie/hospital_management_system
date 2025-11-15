@@ -1,29 +1,29 @@
 // app/api/appointments/route.js
 import { NextResponse } from "next/server";
-import prisma from "../../../lib/prisma";
+import prisma from "../../../lib/db";
 
 export async function POST(req) {
   try {
     const data = await req.json();
     const {
-      patient,
+      patientId,
+      doctorId,
       email,
       phone,
       appointmentDate,
       time,
-      doctor,
       reason,
       city,
     } = data;
 
     const appointment = await prisma.appointment.create({
       data: {
-        patient,
+        patientId,
+        doctorId,
         email,
         phone,
         appointmentDate,
         time,
-        doctor,
         reason,
         city,
       },
@@ -43,6 +43,10 @@ export async function GET() {
   try {
     const appointments = await prisma.appointment.findMany({
       orderBy: { createdAt: "desc" },
+      include: {
+        patient: true,
+        doctor: true,
+      },
     });
     return NextResponse.json({ success: true, appointments });
   } catch (error) {

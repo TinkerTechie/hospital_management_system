@@ -1,24 +1,54 @@
-import  prisma  from "../../../lib/prisma";
-
+import prisma from "../../../lib/db";
 import bcrypt from "bcryptjs";
 
 export async function POST(req) {
   try {
-    const { email, password } = await req.json();
+    const body = await req.json();
+    const { email, password } = body || {};
+
+    // Validate input
+    if (!email || !password) {
+      return new Response(
+        JSON.stringify({ error: "Email and password are required" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      return new Response(JSON.stringify({ error: "User not found" }), { status: 404 });
+      return new Response(
+        JSON.stringify({ error: "User not found" }),
+        { status: 404, headers: { "Content-Type": "application/json" } }
+      );
     }
 
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
-      return new Response(JSON.stringify({ error: "Invalid password" }), { status: 401 });
+      return new Response(
+        JSON.stringify({ error: "Invalid password" }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
     }
 
-    return new Response(JSON.stringify({ user }), { status: 200 });
+    // Include role
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Login successful",
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
   } catch (err) {
-    console.error(err);
-    return new Response(JSON.stringify({ error: "Login failed" }), { status: 500 });
+    console.error("Login error:", err);
+    return new Response(
+      JSON.stringify({ error: "Server error" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
   }
 }

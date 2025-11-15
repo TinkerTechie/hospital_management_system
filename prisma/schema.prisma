@@ -1,145 +1,159 @@
-// Prisma schema for Hospital Management System
-// Works with Next.js + Prisma + MySQL + NextAuth
-
+// =============================
+// Prisma Client Generator
+// =============================
 generator client {
   provider = "prisma-client-js"
 }
 
+// =============================
+// PostgreSQL Datasource
+// =============================
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// ----------------------
+// =============================
 // ENUMS
-// ----------------------
+// =============================
 enum UserRole {
   PATIENT
   DOCTOR
   NURSE
 }
 
-// ----------------------
+// =============================
 // USER MODEL
-// ----------------------
+// =============================
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  password      String?
-  image         String?
-  role          UserRole  @default(PATIENT)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id               String    @id @default(uuid())
+  name             String?
+  email            String?   @unique
+  emailVerified    DateTime?
+  password         String?
+  image            String?
+  role             UserRole  @default(PATIENT)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  resetToken       String?
+  resetTokenExpiry DateTime?
 
-  // Relations
-  doctorProfile  Doctor?
-  nurseProfile   Nurse?
-  patientProfile Patient?
+  doctorProfile    Doctor?
+  nurseProfile     Nurse?
+  patientProfile   Patient?
 
-  accounts Account[]
-  sessions Session[]
+  accounts         Account[]
+  sessions         Session[]
 }
 
-// ----------------------
+// =============================
 // DOCTOR MODEL
-// ----------------------
+// =============================
 model Doctor {
-  id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                     String   @id @default(uuid())
+  userId                 String   @unique
+  user                   User     @relation(fields: [userId], references: [id])
 
   fullName               String
-  dob                    DateTime
-  gender                 String
-  phone                  String
+  dob                    DateTime?
+  gender                 String?
+  phone                  String?
   address                String?
-  profilePicUrl          String
-  licenseNumber          String   @unique
+  profilePicUrl          String?
+
+  // 🔥 FIXED: Made optional so signup does NOT break
+  licenseNumber          String?  @unique  
+
   registrationState      String?
   medicalCouncil         String?
   degrees                String?
-  specialization         String
-  yearsOfExperience      Int
+  specialization         String?
+  yearsOfExperience      Int?
   currentHospital        String?
   workType               String   @default("Full-time")
   consultationFee        Float?
-  documentUrls           Json // ✅ store array of URLs as JSON
-  workingDays            Json // ✅ store array of days as JSON
-  startTime              String
-  endTime                String
+  documentUrls           Json?
+  workingDays            Json?
+  startTime              String?
+  endTime                String?
   enableTeleconsultation Boolean  @default(false)
-  bio                    String   @db.Text
+  bio                    String?
   languages              String?
   emergencyContactName   String?
   emergencyContactNumber String?
 
-  // Relations
-  patients     Patient[]
-  appointments Appointment[]
+  patients               Patient[]
+  appointments           Appointment[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 }
 
-// ----------------------
+// =============================
 // PATIENT MODEL
-// ----------------------
+// =============================
 model Patient {
-  id             String        @id @default(cuid())
-  userId         String        @unique
-  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String     @id @default(uuid())
+  userId         String     @unique
+  user           User       @relation(fields: [userId], references: [id])
+
+  fullName       String
   age            Int?
   bloodGroup     String?
   medicalHistory String?
+
   doctorId       String?
-  doctor         Doctor?       @relation(fields: [doctorId], references: [id])
+  doctor         Doctor?    @relation(fields: [doctorId], references: [id])
+
   appointments   Appointment[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 }
 
-// ----------------------
+// =============================
 // NURSE MODEL
-// ----------------------
+// =============================
 model Nurse {
-  id           String   @id @default(cuid())
+  id           String   @id @default(uuid())
   userId       String   @unique
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shiftTiming  String
-  assignedWard String
+  user         User     @relation(fields: [userId], references: [id])
+
+  fullName     String
+  shiftTiming  String?
+  assignedWard String?
   phone        String?
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
 
-// ----------------------
+// =============================
 // APPOINTMENT MODEL
-// ----------------------
+// =============================
 model Appointment {
-  id              Int      @id @default(autoincrement())
-  patient         String
-  email           String
-  phone           String
-  appointmentDate String
-  time            String
-  doctor          String?
-  reason          String
-  city            String
-  createdAt       DateTime @default(now())
+  id              String    @id @default(uuid())
 
-  Doctor Doctor[]
+  patientId       String
+  doctorId        String
 
-  Patient Patient[]
+  patient         Patient   @relation(fields: [patientId], references: [id])
+  doctor          Doctor    @relation(fields: [doctorId], references: [id])
+
+  appointmentDate DateTime
+  time            String?
+  reason          String?
+  city            String?
+  email           String?
+  phone           String?
+
+  createdAt       DateTime  @default(now())
 }
 
-
-// ----------------------
+// =============================
 // CONTACT MESSAGE MODEL
-// ----------------------
+// =============================
 model ContactMessage {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   name      String
   email     String
   phone     String
@@ -147,34 +161,35 @@ model ContactMessage {
   createdAt DateTime @default(now())
 }
 
-// ----------------------
+// =============================
 // NEXTAUTH MODELS
-// ----------------------
+// =============================
 model Account {
-  id                String  @id @default(cuid())
+  id                String  @id @default(uuid())
   userId            String
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
 
   @@unique([provider, providerAccountId])
 }
 
 model Session {
-  id           String   @id @default(cuid())
+  id           String   @id @default(uuid())
   sessionToken String   @unique
   userId       String
   expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user         User     @relation(fields: [userId], references: [id])
 }
 
 model VerificationToken {

@@ -1,55 +1,30 @@
 import { NextResponse } from "next/server";
-import prisma from "../../../lib/prisma";
+import prisma from "../../../lib/db";
 
-// -------------------------
-// GET → Fetch all doctors
-// -------------------------
 export async function GET() {
   try {
-    const doctors = await prisma.doctor.findMany({
+    const doctor = await prisma.doctor.findFirst({
       select: {
         id: true,
         fullName: true,
         specialization: true,
-        yearsOfExperience: true,
+        user: {
+          select: {
+            email: true,
+          },
+        },
       },
     });
-    return NextResponse.json(doctors);
-  } catch (error) {
-    console.error("Error fetching doctors:", error);
-    return NextResponse.json({ error: "Failed to fetch doctors" }, { status: 500 });
-  }
-}
 
-// -------------------------
-// PUT → Update a doctor profile
-// -------------------------
-export async function PUT(req) {
-  try {
-    const body = await req.json();
-    const { id, fullName, specialization, yearsOfExperience, email, phone, address, city, state } = body;
-
-    if (!id) {
-      return NextResponse.json(
-        { success: false, message: "Doctor ID is required" },
-        { status: 400 }
-      );
+    if (!doctor) {
+      return NextResponse.json({ error: "No doctor found" }, { status: 404 });
     }
 
-    const updatedDoctor = await prisma.doctor.update({
-      where: { id },
-      data: { fullName, specialization, yearsOfExperience, email, phone, address, city, state },
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: "Profile updated successfully",
-      doctor: updatedDoctor,
-    });
+    return NextResponse.json(doctor, { status: 200 });
   } catch (error) {
-    console.error("Error updating doctor:", error);
+    console.error("Error fetching doctor:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to update doctor profile" },
+      { error: error.message },
       { status: 500 }
     );
   }
