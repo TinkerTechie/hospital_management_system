@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import prisma from "../../../lib/db";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";   // ⬅️ ADDED
 
-// POST /api/auth/signup
 export async function POST(req) {
   try {
-    const { name, email, password, role, dob } = await req.json(); // ⬅️ added dob
+    const { name, email, password, role, dob } = await req.json();
 
-    // Validate required fields
     if (!name || !email || !password || !role) {
       return NextResponse.json(
         { error: "Name, email, password, and role are required" },
@@ -15,13 +14,11 @@ export async function POST(req) {
       );
     }
 
-    // Validate role enum
     const validRoles = ["PATIENT", "DOCTOR", "NURSE"];
     if (!validRoles.includes(role.toUpperCase())) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
 
-    // Check if user already exists
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
       return NextResponse.json(
@@ -30,10 +27,8 @@ export async function POST(req) {
       );
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
     const user = await prisma.user.create({
       data: {
         name,
@@ -43,7 +38,6 @@ export async function POST(req) {
       },
     });
 
-    // Create linked profile based on role
     switch (role.toUpperCase()) {
       case "DOCTOR":
         await prisma.doctor.create({
@@ -79,23 +73,29 @@ export async function POST(req) {
 
     const { password: _, ...userSafe } = user;
 
-    // Send welcome email asynchronously (non-blocking)
+    // ⬅️ JWT ADDED BELOW
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
     fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/email/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         to: user.email,
         subject: "Welcome to HospitalNext!",
-        text: `Hello ${user.name},\n\nWelcome to HospitalNext! Your account has been created successfully. We are glad to have you onboard!\n\n- Team HospitalNext`,
+        text: `Hello ${user.name},\n\nWelcome to HospitalNext!`,
       }),
     }).catch((err) => console.error("Error sending welcome email:", err));
 
-    // Response
     return NextResponse.json(
       {
         success: true,
         message: "User registered successfully",
         user: userSafe,
+        token, // ⬅️ ADDED
       },
       { status: 201 }
     );

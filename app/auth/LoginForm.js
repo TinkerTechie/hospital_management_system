@@ -1,5 +1,7 @@
 "use client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
 import { signIn } from "next-auth/react";
 import React, { useState } from "react";
 import { Mail, Lock, Eye, EyeOff, Loader2, LogIn } from "lucide-react";
@@ -15,6 +17,7 @@ export default function LoginForm({ onSwitch }) {
   const [errorMsg, setErrorMsg] = useState("");
 
   const dispatch = useDispatch();
+  const router = useRouter();
 
   const validateEmail = (email) => /\S+@\S+\.\S+/.test(email);
 
@@ -51,14 +54,16 @@ export default function LoginForm({ onSwitch }) {
         localStorage.setItem("user", JSON.stringify(user));
 
         alert(`Welcome ${user.name}! Role: ${user.role}`);
+        console.log("ROLE EXACT VALUE:", user.role);
+        alert("ROLE EXACT VALUE: " + JSON.stringify(user.role));
 
         // ✅ Role-based redirect
         if (user.role === "DOCTOR") {
-          window.location.href = "/doctor/dashboard";
+          router.push("/dashboard/doctor");
         } else if (user.role === "NURSE") {
-          window.location.href = "/nurse/dashboard";
+          router.push("/dashboard/nurse");
         } else {
-          window.location.href = "/patient/dashboard";
+          router.push("/dashboard/patient");
         }
       } else {
         setErrorMsg(data.error || "Login failed. Please try again.");
