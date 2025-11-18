@@ -6,13 +6,9 @@ import PatientDashboardSidebar from "../../components/patient/PatientDashboardSi
 import {
   Calendar,
   Bell,
-  HeartPulse,
   Activity,
   FileText,
-  Pill,
   Stethoscope,
-  PhoneCall,
-  PlusCircle,
   ChevronRight,
   ChevronLeft,
 } from "lucide-react";
@@ -80,58 +76,57 @@ export default function PatientDashboard() {
       },
     ],
     options: {
-      chart: { toolbar: { show: false }, foreColor: dark ? "#ffffff" : "#111827" },
+      chart: { toolbar: { show: false }, foreColor: dark ? "#ffffff" : "#1F2937" },
       xaxis: { categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"] },
-      colors: ["#10B981"],
+      colors: ["#0E9F6E"], // updated to homepage teal
       stroke: { width: 3 },
-      grid: { borderColor: dark ? "#444" : "#e5e7eb" },
+      grid: { borderColor: dark ? "#444" : "#E5E7EB" },
     },
   };
 
   return (
     <div className={dark ? "dark" : ""}>
-      <section className="bg-gray-50 dark:bg-gray-900 min-h-screen flex">
+      <section className="bg-[#F8F9FA] dark:bg-gray-900 min-h-screen flex">
         <PatientDashboardSidebar userName={userName} profilePic={profilePic} />
 
         <main className="flex-1 p-6 md:p-10 max-w-6xl mx-auto dark:text-gray-200">
+          
           {/* Header */}
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold">
+            <h1 className="text-3xl font-bold text-[#1F2937] dark:text-gray-200">
               Welcome, {userName} 👋
             </h1>
 
             <div className="flex items-center gap-4">
-              {/* Dark mode toggle */}
               <button
                 onClick={toggleDark}
-                className="px-3 py-2 rounded-lg border dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-[#E6F4F1] dark:hover:bg-gray-800 transition"
               >
                 {dark ? "☀ Light" : "🌙 Dark"}
               </button>
 
-              {/* Notification Bell */}
               <div className="relative">
                 <button
                   onClick={() => setShowNotifications(!showNotifications)}
                   className="relative"
                 >
-                  <Bell className="h-7 w-7 text-gray-700 dark:text-gray-200" />
+                  <Bell className="h-7 w-7 text-[#1F2937] dark:text-gray-200" />
                   <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full">
                     {notifications.length}
                   </span>
                 </button>
 
                 {showNotifications && (
-                  <div className="absolute right-0 mt-2 bg-white dark:bg-gray-800 p-4 shadow-xl rounded-xl w-72 border dark:border-gray-700">
-                    <h3 className="font-semibold mb-3">Notifications</h3>
+                  <div className="absolute right-0 mt-2 bg-white dark:bg-gray-800 p-4 shadow-xl rounded-xl w-72 border border-gray-200 dark:border-gray-700">
+                    <h3 className="font-semibold mb-3 text-[#1F2937] dark:text-gray-200">Notifications</h3>
                     <div className="space-y-2">
                       {notifications.map((n) => (
                         <div
                           key={n.id}
-                          className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 flex justify-between"
+                          className="p-2 rounded-lg bg-[#F8F9FA] dark:bg-gray-700 flex justify-between"
                         >
-                          <span>{n.msg}</span>
-                          <span className="text-xs text-gray-500">{n.time}</span>
+                          <span className="text-[#1F2937] dark:text-gray-200">{n.msg}</span>
+                          <span className="text-xs text-[#6B7280]">{n.time}</span>
                         </div>
                       ))}
                     </div>
@@ -145,24 +140,26 @@ export default function PatientDashboard() {
           <StatsRow appointments={appointments} />
 
           {/* Chart */}
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm my-10">
-            <h2 className="font-semibold text-xl mb-4">Health Score Trend</h2>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm my-10 border border-gray-200 dark:border-gray-700">
+            <h2 className="font-semibold text-xl text-[#1F2937] dark:text-gray-200 mb-4">
+              Health Score Trend
+            </h2>
             <Chart options={chartData.options} series={chartData.series} height={300} />
           </div>
 
-          {/* Activities Timeline */}
+          {/* Timeline */}
           <ActivityTimeline activities={activities} />
 
-          {/* Enhanced Appointment Cards */}
+          {/* Appointments */}
           <AppointmentsSection appointments={appointments} loading={loading} />
 
-          {/* Prescription Reminders */}
+          {/* Prescriptions */}
           <PrescriptionSection prescriptions={prescriptions} />
 
-          {/* Health Tips Carousel */}
+          {/* Health Tips */}
           <HealthTipsCarousel />
 
-          {/* Emergency Contact */}
+          {/* Emergency */}
           <EmergencyCard />
         </main>
       </section>
@@ -170,9 +167,10 @@ export default function PatientDashboard() {
   );
 }
 
-/* ---------------------------------------------------
-   COMPONENT: Stats Overview
----------------------------------------------------- */
+/* -------------------------------------------
+   COMPONENTS BELOW — ONLY COLORS UPDATED
+-------------------------------------------*/
+
 function StatsRow({ appointments }) {
   return (
     <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -186,35 +184,35 @@ function StatsRow({ appointments }) {
 
 function StatCard({ icon, title, value }) {
   return (
-    <div className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border dark:border-gray-700 hover:shadow-md transition">
+    <div className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition">
       <div className="flex items-center gap-4">
-        <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-full">{icon}</div>
+        <div className="p-3 bg-[#F1F5F4] dark:bg-gray-700 rounded-full text-[#0E9F6E]">
+          {icon}
+        </div>
         <div>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">{title}</p>
-          <p className="text-2xl font-bold">{value}</p>
+          <p className="text-[#6B7280] dark:text-gray-400 text-sm">{title}</p>
+          <p className="text-2xl font-bold text-[#1F2937] dark:text-gray-100">{value}</p>
         </div>
       </div>
     </div>
   );
 }
 
-/* ---------------------------------------------------
-   COMPONENT: Timeline
----------------------------------------------------- */
 function ActivityTimeline({ activities }) {
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border dark:border-gray-700 my-10">
-      <h2 className="font-semibold text-xl mb-4">Recent Activity</h2>
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 my-10">
+      <h2 className="font-semibold text-xl text-[#1F2937] dark:text-gray-200 mb-4">Recent Activity</h2>
+
       {activities.length === 0 ? (
-        <p className="text-gray-500">No recent activity.</p>
+        <p className="text-[#6B7280]">No recent activity.</p>
       ) : (
         <div className="space-y-5">
           {activities.map((a, i) => (
             <div key={i} className="flex items-start gap-4">
-              <div className="w-3 h-3 bg-teal-500 rounded-full mt-2"></div>
+              <div className="w-3 h-3 bg-[#0E9F6E] rounded-full mt-2"></div>
               <div>
-                <p className="font-medium">{a.title}</p>
-                <p className="text-sm text-gray-500">{a.time}</p>
+                <p className="font-medium text-[#1F2937] dark:text-gray-200">{a.title}</p>
+                <p className="text-sm text-[#6B7280]">{a.time}</p>
               </div>
             </div>
           ))}
@@ -224,13 +222,10 @@ function ActivityTimeline({ activities }) {
   );
 }
 
-/* ---------------------------------------------------
-   COMPONENT: Appointment Cards
----------------------------------------------------- */
 function AppointmentsSection({ appointments, loading }) {
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border dark:border-gray-700 my-10">
-      <h2 className="font-semibold text-xl mb-4">Upcoming Appointments</h2>
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 my-10">
+      <h2 className="font-semibold text-xl text-[#1F2937] dark:text-gray-200 mb-4">Upcoming Appointments</h2>
 
       {loading ? (
         <p>Loading...</p>
@@ -249,40 +244,37 @@ function AppointmentsSection({ appointments, loading }) {
 
 function AppointmentCard({ appt }) {
   return (
-    <div className="p-4 rounded-xl border dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition flex justify-between">
+    <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition flex justify-between">
       <div>
-        <p className="font-semibold text-lg">{appt.doctorName || "Dr. John Doe"}</p>
-        <p className="text-gray-600 dark:text-gray-400 text-sm">{appt.department || "General Medicine"}</p>
-        <p className="text-gray-500 text-sm mt-1">
+        <p className="font-semibold text-lg text-[#1F2937] dark:text-gray-200">{appt.doctorName || "Dr. John Doe"}</p>
+        <p className="text-[#6B7280] dark:text-gray-400 text-sm">{appt.department || "General Medicine"}</p>
+        <p className="text-[#6B7280] text-sm mt-1">
           {new Date(appt.dateTime).toLocaleDateString()} •{" "}
           {new Date(appt.dateTime).toLocaleTimeString()}
         </p>
       </div>
 
-      <button className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition text-sm">
+      <button className="px-4 py-2 bg-[#0E9F6E] text-white rounded-lg hover:bg-[#0C8B60] transition text-sm">
         Join Telehealth
       </button>
     </div>
   );
 }
 
-/* ---------------------------------------------------
-   COMPONENT: Prescriptions
----------------------------------------------------- */
 function PrescriptionSection({ prescriptions }) {
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border dark:border-gray-700 my-10">
-      <h2 className="font-semibold text-xl mb-4">Prescriptions & Refills</h2>
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 my-10">
+      <h2 className="font-semibold text-xl text-[#1F2937] dark:text-gray-200 mb-4">Prescriptions & Refills</h2>
 
       {prescriptions.length === 0 ? (
-        <p className="text-gray-500">No prescriptions yet.</p>
+        <p className="text-[#6B7280]">No prescriptions yet.</p>
       ) : (
         <div className="space-y-4">
           {prescriptions.map((p) => (
-            <div key={p.id} className="p-4 rounded-lg border dark:border-gray-700">
-              <p className="font-semibold">{p.medication}</p>
-              <p className="text-sm text-gray-500">Refill on: {p.refillDate}</p>
-              <button className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
+            <div key={p.id} className="p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+              <p className="font-semibold text-[#1F2937] dark:text-gray-200">{p.medication}</p>
+              <p className="text-sm text-[#6B7280]">Refill on: {p.refillDate}</p>
+              <button className="mt-2 px-4 py-2 bg-[#0E9F6E] text-white rounded-lg hover:bg-[#0C8B60] text-sm">
                 Request Refill
               </button>
             </div>
@@ -293,9 +285,6 @@ function PrescriptionSection({ prescriptions }) {
   );
 }
 
-/* ---------------------------------------------------
-   COMPONENT: Health Tips Carousel
----------------------------------------------------- */
 function HealthTipsCarousel() {
   const tips = [
     "Drink 2L of water daily to stay hydrated.",
@@ -305,30 +294,27 @@ function HealthTipsCarousel() {
   const [index, setIndex] = useState(0);
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border dark:border-gray-700 my-10">
-      <h2 className="font-semibold text-xl mb-4">Health Tips</h2>
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 my-10">
+      <h2 className="font-semibold text-xl text-[#1F2937] dark:text-gray-200 mb-4">Health Tips</h2>
 
       <div className="flex items-center justify-between">
         <button onClick={() => setIndex((i) => (i - 1 + tips.length) % tips.length)}>
-          <ChevronLeft />
+          <ChevronLeft className="text-[#0E9F6E]" />
         </button>
 
-        <p className="text-center text-lg font-medium w-full">{tips[index]}</p>
+        <p className="text-center text-lg font-medium text-[#1F2937] dark:text-gray-200 w-full">{tips[index]}</p>
 
         <button onClick={() => setIndex((i) => (i + 1) % tips.length)}>
-          <ChevronRight />
+          <ChevronRight className="text-[#0E9F6E]" />
         </button>
       </div>
     </div>
   );
 }
 
-/* ---------------------------------------------------
-   COMPONENT: Emergency Contact
----------------------------------------------------- */
 function EmergencyCard() {
   return (
-    <div className="bg-red-50 dark:bg-red-900 p-6 rounded-2xl shadow-sm border border-red-200 dark:border-red-700 text-red-800 dark:text-red-200 mb-16">
+    <div className="bg-[#FFE8E8] dark:bg-red-900 p-6 rounded-2xl shadow-sm border border-red-300 dark:border-red-700 text-[#B91C1C] dark:text-red-200 mb-16">
       <h2 className="font-semibold text-xl mb-2">Emergency Contact</h2>
       <p className="text-lg font-medium">Call: 108 or +91 9876543210</p>
       <button className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
@@ -338,21 +324,18 @@ function EmergencyCard() {
   );
 }
 
-/* ---------------------------------------------------
-   COMPONENT: Empty Appointments
----------------------------------------------------- */
 function EmptyAppointments() {
   return (
     <div className="text-center py-10">
-      <Calendar className="h-12 w-12 mx-auto text-teal-600 mb-4" />
-      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+      <Calendar className="h-12 w-12 mx-auto text-[#0E9F6E] mb-4" />
+      <h3 className="text-lg font-semibold text-[#1F2937] dark:text-gray-200 mb-2">
         No Appointments Yet
       </h3>
-      <p className="text-gray-600 dark:text-gray-400 mb-4">
+      <p className="text-[#6B7280] dark:text-gray-400 mb-4">
         You&apos;re all caught up. Book a visit to stay on track with your health.
       </p>
 
-      <button className="px-6 py-3 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition">
+      <button className="px-6 py-3 bg-[#0E9F6E] text-white rounded-lg font-medium hover:bg-[#0C8B60] transition">
         Schedule Appointment
       </button>
     </div>

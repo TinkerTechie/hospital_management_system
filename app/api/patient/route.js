@@ -1,30 +1,38 @@
 import { NextResponse } from "next/server";
-import prisma from "../../../lib/db"; // make sure db.js is correct
+import prisma from "@/lib/prisma"; // your prisma client
 
-export async function GET() {
+export async function GET(req) {
   try {
-    // Fetch upcoming appointments (example: limit 5)
+    const userId = req.headers.get("x-user-id"); // get from auth later
+
+    if (!userId) {
+      return NextResponse.json({ error: "User ID missing" }, { status: 400 });
+    }
+
+    // Fetch data from DB
     const appointments = await prisma.appointment.findMany({
-      where: {
-        // only for this patient — adjust after login integration
-      },
+      where: { patientId: userId },
       orderBy: { dateTime: "asc" },
-      take: 5,
     });
 
-    // Return dashboard stats
+    const activities = await prisma.activity.findMany({
+      where: { patientId: userId },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    });
+
+    const prescriptions = await prisma.prescription.findMany({
+      where: { patientId: userId },
+    });
+
     return NextResponse.json({
-      stats: {
-        upcomingAppointments: appointments.length,
-        totalPatients: 1, // not relevant for patient, you can remove later
-      },
       appointments,
+      activities,
+      prescriptions,
+      healthScore: 92, // optional
     });
   } catch (error) {
-    console.error("Dashboard error:", error);
-    return NextResponse.json(
-      { error: "Failed to load dashboard data" },
-      { status: 500 }
-    );
+    console.error("Error:", error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

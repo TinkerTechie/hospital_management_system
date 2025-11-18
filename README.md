@@ -111,6 +111,8 @@ POST
 Create bill
 Admin/Finance
 
+renderLink = "https://hospital-management-system-xx3n.onrender.com"
+databaseLink = "https://console.neon.tech/app/projects/bitter-butterfly-33052637"
 
 
 ## Getting Started
