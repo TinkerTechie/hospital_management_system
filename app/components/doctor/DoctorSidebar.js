@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
-import { logout } from "@/redux/UserSlice";
+import { logout } from "@/src/redux/UserSlice";
 import Swal from "sweetalert2";
 
 export default function DoctorSidebar({ userName }) {

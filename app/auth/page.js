@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Stethoscope } from 'lucide-react';
-import  LoginForm  from './LoginForm';
+import LoginForm from './LoginForm';
 import { SignUpForm } from './SignUpForm';
 
 export default function AuthPage() {
@@ -24,22 +24,9 @@ export default function AuthPage() {
         .animate-fadeIn {
           animation: fadeIn 0.4s ease-out;
         }
-        .bg-hero {
-          background: radial-gradient(
-              circle at top left,
-              rgba(13, 148, 136, 0.2),
-              transparent 60%
-            ),
-            radial-gradient(
-              circle at bottom right,
-              rgba(250, 204, 21, 0.15),
-              transparent 60%
-            ),
-            linear-gradient(to bottom right, #f9fafb, #e0f2f1);
-        }
       `}</style>
 
-      <main className="flex min-h-screen w-full items-center justify-center bg-hero p-4 font-sans">
+      <main className="flex min-h-screen w-full items-center justify-center p-4 font-sans">
         <div className="w-full max-w-md">
           <div className="mb-8 flex flex-col items-center">
             <div className="rounded-full bg-teal-100 p-4 shadow-md">

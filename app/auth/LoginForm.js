@@ -53,12 +53,16 @@ export default function LoginForm({ onSwitch }) {
         dispatch(login(user));
         localStorage.setItem("user", JSON.stringify(user));
 
-        alert(`Welcome ${user.name}! Role: ${user.role}`);
-        console.log("ROLE EXACT VALUE:", user.role);
-        alert("ROLE EXACT VALUE: " + JSON.stringify(user.role));
+        // ✅ Single success message
+        const roleDisplay = user.role === "ADMIN" ? "Admin" :
+          user.role === "DOCTOR" ? "Doctor" :
+            user.role === "NURSE" ? "Nurse" : "Patient";
+        alert(`Opening ${roleDisplay} dashboard...`);
 
         // ✅ Role-based redirect
-        if (user.role === "DOCTOR") {
+        if (user.role === "ADMIN") {
+          router.push("/dashboard/admin");
+        } else if (user.role === "DOCTOR") {
           router.push("/dashboard/doctor");
         } else if (user.role === "NURSE") {
           router.push("/dashboard/nurse");
@@ -176,9 +180,8 @@ export default function LoginForm({ onSwitch }) {
         <button
           type="submit"
           disabled={loading}
-          className={`w-full flex items-center justify-center py-2 px-4 bg-green-600 text-white font-semibold rounded-lg transition-all duration-200 hover:bg-green-700 focus:ring-2 focus:ring-green-400 focus:outline-none ${
-            loading ? "opacity-70 cursor-not-allowed" : ""
-          }`}
+          className={`w-full flex items-center justify-center py-2 px-4 bg-green-600 text-white font-semibold rounded-lg transition-all duration-200 hover:bg-green-700 focus:ring-2 focus:ring-green-400 focus:outline-none ${loading ? "opacity-70 cursor-not-allowed" : ""
+            }`}
         >
           {loading ? (
             <Loader2 className="animate-spin h-5 w-5" />

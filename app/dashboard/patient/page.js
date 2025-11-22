@@ -1,59 +1,77 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
-import PatientDashboardSidebar from "../../components/patient/PatientDashboardSidebar";
 import {
   Calendar,
-  Bell,
+  Pill,
   Activity,
   FileText,
-  Stethoscope,
-  ChevronRight,
-  ChevronLeft,
+  Lightbulb,
+  AlertCircle,
+  ArrowRight
 } from "lucide-react";
+import Link from "next/link";
+import { motion } from "framer-motion";
 
-import dynamic from "next/dynamic";
-const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
+// Import Premium Components
+// Import Premium Components
+import DashboardNavbar from "../../components/patient/premium/DashboardNavbar";
+import DashboardFooter from "../../components/patient/premium/DashboardFooter";
+import StatCard from "../../components/patient/premium/StatCard";
+import HealthChart from "../../components/patient/premium/HealthChart";
+import EmergencyButton from "../../components/patient/premium/EmergencyButton";
+import EmptyState from "../../components/patient/premium/EmptyState";
+import { AppointmentCard, PrescriptionCard, RecordRow } from "../../components/patient/premium/Cards";
+import QuickActions from "../../components/patient/premium/QuickActions";
 
-// PNG so Next.js doesn't block SVG
+// Fallback image
 const profilePic = "https://placehold.co/120x120.png?text=P";
 
 export default function PatientDashboard() {
-  const [userName, setUserName] = useState("Loading...");
+  const [user, setUser] = useState(null);
+  const [patientProfile, setPatientProfile] = useState(null);
   const [appointments, setAppointments] = useState([]);
-  const [activities, setActivities] = useState([]);
   const [prescriptions, setPrescriptions] = useState([]);
-  const [notifications, setNotifications] = useState([
-    { id: 1, msg: "Your lab report is now available", time: "2h ago" },
-    { id: 2, msg: "Doctor updated your prescription", time: "5h ago" },
-  ]);
-  const [showNotifications, setShowNotifications] = useState(false);
+  const [medicalRecords, setMedicalRecords] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [dark, setDark] = useState(false);
+  const [error, setError] = useState(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showFullTip, setShowFullTip] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        const user = JSON.parse(storedUser);
-        setUserName(user.name || "Patient");
+    // Role-based access control
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const userData = JSON.parse(storedUser);
+      if (userData.role !== "PATIENT") {
+        const correctDashboard = userData.role === "ADMIN" ? "/dashboard/admin" :
+          userData.role === "DOCTOR" ? "/dashboard/doctor" :
+            userData.role === "NURSE" ? "/dashboard/nurse" : "/auth";
+        window.location.href = correctDashboard;
+        return;
       }
-      const theme = localStorage.getItem("theme");
-      setDark(theme === "dark");
     }
 
+    // Fetch patient dashboard data
     async function fetchData() {
       try {
-        const res = await fetch("/api/dashboard/patient");
-        if (!res.ok) return;
-        const data = await res.json();
+        const res = await fetch("/api/patient");
+        if (res.status === 401) {
+          window.location.href = "/auth";
+          return;
+        }
+        if (!res.ok) throw new Error("Failed to fetch patient data");
 
+        const data = await res.json();
+        setUser(data.user);
+        setPatientProfile(data.patientProfile);
         setAppointments(data.appointments || []);
-        setActivities(data.activities || []);
         setPrescriptions(data.prescriptions || []);
+        setMedicalRecords(data.medicalRecords || []);
       } catch (e) {
         console.error(e);
+        setError(e.message);
       } finally {
         setLoading(false);
       }
@@ -62,282 +80,255 @@ export default function PatientDashboard() {
     fetchData();
   }, []);
 
-  const toggleDark = () => {
-    const next = !dark;
-    setDark(next);
-    localStorage.setItem("theme", next ? "dark" : "light");
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
+    window.location.href = "/auth";
   };
 
-  const chartData = {
-    series: [
-      {
-        name: "Health Score",
-        data: [78, 83, 80, 87, 90, 92],
-      },
-    ],
-    options: {
-      chart: { toolbar: { show: false }, foreColor: dark ? "#ffffff" : "#1F2937" },
-      xaxis: { categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"] },
-      colors: ["#0E9F6E"], // updated to homepage teal
-      stroke: { width: 3 },
-      grid: { borderColor: dark ? "#444" : "#E5E7EB" },
-    },
+  if (loading) return <LoadingScreen />;
+  if (error) return <ErrorScreen msg={error} />;
+
+  // Animation Variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
   };
 
   return (
-    <div className={dark ? "dark" : ""}>
-      <section className="bg-[#F8F9FA] dark:bg-gray-900 min-h-screen flex">
-        <PatientDashboardSidebar userName={userName} profilePic={profilePic} />
+    <div className="min-h-screen font-sans text-gray-900 bg-[#F9FAFB]">
 
-        <main className="flex-1 p-6 md:p-10 max-w-6xl mx-auto dark:text-gray-200">
-          
-          {/* Header */}
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold text-[#1F2937] dark:text-gray-200">
-              Welcome, {userName} 👋
-            </h1>
+      <DashboardNavbar user={user} handleLogout={handleLogout} />
 
-            <div className="flex items-center gap-4">
-              <button
-                onClick={toggleDark}
-                className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-[#E6F4F1] dark:hover:bg-gray-800 transition"
-              >
-                {dark ? "☀ Light" : "🌙 Dark"}
-              </button>
+      <main className="max-w-7xl mx-auto px-6 py-8">
 
-              <div className="relative">
-                <button
-                  onClick={() => setShowNotifications(!showNotifications)}
-                  className="relative"
-                >
-                  <Bell className="h-7 w-7 text-[#1F2937] dark:text-gray-200" />
-                  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full">
-                    {notifications.length}
-                  </span>
-                </button>
+        {/* Hero Section */}
+        <motion.div
+          variants={itemVariants}
+          initial="hidden"
+          animate="visible"
+          className="mb-8"
+        >
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+            Welcome back, <span className="text-teal-600">{user?.name?.split(" ")[0]}</span>!
+          </h1>
+          <p className="text-gray-500 mt-1">Here is your health snapshot for today.</p>
+        </motion.div>
 
-                {showNotifications && (
-                  <div className="absolute right-0 mt-2 bg-white dark:bg-gray-800 p-4 shadow-xl rounded-xl w-72 border border-gray-200 dark:border-gray-700">
-                    <h3 className="font-semibold mb-3 text-[#1F2937] dark:text-gray-200">Notifications</h3>
-                    <div className="space-y-2">
-                      {notifications.map((n) => (
-                        <div
-                          key={n.id}
-                          className="p-2 rounded-lg bg-[#F8F9FA] dark:bg-gray-700 flex justify-between"
-                        >
-                          <span className="text-[#1F2937] dark:text-gray-200">{n.msg}</span>
-                          <span className="text-xs text-[#6B7280]">{n.time}</span>
-                        </div>
-                      ))}
-                    </div>
+        {/* Quick Actions Row */}
+        <motion.div
+          variants={itemVariants}
+          initial="hidden"
+          animate="visible"
+          className="flex flex-wrap gap-4 mb-10"
+        >
+          <Link href="/dashboard/patient/appointments/new" className="flex items-center gap-2 bg-teal-600 text-white px-5 py-3 rounded-xl hover:bg-teal-700 font-medium shadow-sm transition-all hover:-translate-y-0.5">
+            <Calendar className="h-5 w-5" /> Book Appointment
+          </Link>
+          <Link href="/dashboard/patient/records" className="flex items-center gap-2 bg-white text-gray-700 border border-gray-200 px-5 py-3 rounded-xl hover:bg-gray-50 font-medium shadow-sm transition-all hover:-translate-y-0.5">
+            <FileText className="h-5 w-5 text-teal-600" /> View Records
+          </Link>
+          <Link href="/dashboard/patient/prescriptions" className="flex items-center gap-2 bg-white text-gray-700 border border-gray-200 px-5 py-3 rounded-xl hover:bg-gray-50 font-medium shadow-sm transition-all hover:-translate-y-0.5">
+            <Pill className="h-5 w-5 text-emerald-600" /> Refill Prescription
+          </Link>
+        </motion.div>
+
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {/* Stats Grid */}
+          <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <StatCard
+              icon={<Calendar className="h-6 w-6" />}
+              label="Appointments"
+              value={appointments.length}
+              sub="Upcoming"
+              color="bg-teal-600"
+              trend={12}
+            />
+            <StatCard
+              icon={<Pill className="h-6 w-6" />}
+              label="Prescriptions"
+              value={prescriptions.length}
+              sub="Active"
+              color="bg-emerald-600"
+              trend={-5}
+            />
+            <StatCard
+              icon={<Activity className="h-6 w-6" />}
+              label="Vitals"
+              value="Normal"
+              sub="Last checkup"
+              color="bg-blue-600"
+              trend={2}
+            />
+            <StatCard
+              icon={<FileText className="h-6 w-6" />}
+              label="Records"
+              value={medicalRecords.length}
+              sub="Total files"
+              color="bg-indigo-600"
+            />
+          </motion.div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            {/* Left Column (Main Content) */}
+            <div className="lg:col-span-2 space-y-8">
+
+              {/* Upcoming Appointments */}
+              <motion.div variants={itemVariants} className="bg-white rounded-2xl shadow-md p-6 border border-teal-100">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-teal-600" /> Upcoming Appointments
+                  </h3>
+                  <Link href="/dashboard/patient/appointments" className="text-sm font-medium text-teal-600 hover:text-teal-700 flex items-center gap-1">
+                    View All <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+
+                {appointments.length === 0 ? (
+                  <EmptyState
+                    icon={Calendar}
+                    title="No upcoming appointments"
+                    message="You're all clear! Schedule your next checkup when needed."
+                  />
+                ) : (
+                  <div className="space-y-4">
+                    {appointments.map((appt) => (
+                      <AppointmentCard key={appt.id} appt={appt} />
+                    ))}
                   </div>
                 )}
-              </div>
+              </motion.div>
+
+              {/* Health Overview Chart */}
+              <motion.div variants={itemVariants} className="bg-white rounded-2xl shadow-md p-6 border border-teal-100">
+                <h3 className="text-lg font-semibold text-gray-800 mb-6 flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-teal-600" /> Health Trends
+                </h3>
+                <div className="h-80">
+                  <HealthChart dark={false} />
+                </div>
+              </motion.div>
+
+            </div>
+
+            {/* Right Column (Sidebar Widgets) */}
+            <div className="space-y-8">
+
+              {/* Active Prescriptions */}
+              <motion.div variants={itemVariants} className="bg-white rounded-2xl shadow-md p-6 border border-teal-100">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <Pill className="h-5 w-5 text-emerald-600" /> Medications
+                  </h3>
+                  <span className="text-xs font-bold bg-emerald-100 text-emerald-700 px-2 py-1 rounded-lg">
+                    {prescriptions.length} Active
+                  </span>
+                </div>
+
+                {prescriptions.length === 0 ? (
+                  <EmptyState
+                    icon={Pill}
+                    title="No active prescriptions"
+                    message="You don't have any active medications."
+                    compact
+                  />
+                ) : (
+                  <div className="space-y-4">
+                    {prescriptions.map((p) => (
+                      <PrescriptionCard key={p.id} p={p} />
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+
+              {/* Subscribe Widget */}
+              <motion.div variants={itemVariants} className="bg-gradient-to-r from-teal-600 to-cyan-600 rounded-2xl p-6 text-white text-center shadow-lg">
+                <h3 className="text-lg font-semibold mb-2">Stay Updated</h3>
+                <p className="text-sm text-teal-100 mb-4">
+                  Get the latest health tips and hospital news.
+                </p>
+                <button className="bg-yellow-400 text-black px-4 py-2 rounded-md hover:bg-yellow-300 font-medium w-full text-sm">
+                  Subscribe Now
+                </button>
+              </motion.div>
+
             </div>
           </div>
 
-          {/* Stats */}
-          <StatsRow appointments={appointments} />
-
-          {/* Chart */}
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm my-10 border border-gray-200 dark:border-gray-700">
-            <h2 className="font-semibold text-xl text-[#1F2937] dark:text-gray-200 mb-4">
-              Health Score Trend
-            </h2>
-            <Chart options={chartData.options} series={chartData.series} height={300} />
-          </div>
-
-          {/* Timeline */}
-          <ActivityTimeline activities={activities} />
-
-          {/* Appointments */}
-          <AppointmentsSection appointments={appointments} loading={loading} />
-
-          {/* Prescriptions */}
-          <PrescriptionSection prescriptions={prescriptions} />
-
-          {/* Health Tips */}
-          <HealthTipsCarousel />
-
-          {/* Emergency */}
-          <EmergencyCard />
-        </main>
-      </section>
-    </div>
-  );
-}
-
-/* -------------------------------------------
-   COMPONENTS BELOW — ONLY COLORS UPDATED
--------------------------------------------*/
-
-function StatsRow({ appointments }) {
-  return (
-    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      <StatCard icon={<Calendar />} title="Total Appointments" value={appointments.length} />
-      <StatCard icon={<Activity />} title="Health Score" value="92%" />
-      <StatCard icon={<FileText />} title="Pending Lab Results" value="1" />
-      <StatCard icon={<Stethoscope />} title="Next Visit" value="Mar 12, 2025" />
-    </div>
-  );
-}
-
-function StatCard({ icon, title, value }) {
-  return (
-    <div className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition">
-      <div className="flex items-center gap-4">
-        <div className="p-3 bg-[#F1F5F4] dark:bg-gray-700 rounded-full text-[#0E9F6E]">
-          {icon}
-        </div>
-        <div>
-          <p className="text-[#6B7280] dark:text-gray-400 text-sm">{title}</p>
-          <p className="text-2xl font-bold text-[#1F2937] dark:text-gray-100">{value}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ActivityTimeline({ activities }) {
-  return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 my-10">
-      <h2 className="font-semibold text-xl text-[#1F2937] dark:text-gray-200 mb-4">Recent Activity</h2>
-
-      {activities.length === 0 ? (
-        <p className="text-[#6B7280]">No recent activity.</p>
-      ) : (
-        <div className="space-y-5">
-          {activities.map((a, i) => (
-            <div key={i} className="flex items-start gap-4">
-              <div className="w-3 h-3 bg-[#0E9F6E] rounded-full mt-2"></div>
-              <div>
-                <p className="font-medium text-[#1F2937] dark:text-gray-200">{a.title}</p>
-                <p className="text-sm text-[#6B7280]">{a.time}</p>
+          {/* Recent Feedback (Moved to Bottom) */}
+          <motion.div variants={itemVariants} className="mt-10 bg-[#F0FDFA] p-8 rounded-xl shadow-md border border-teal-100 max-w-3xl mx-auto text-center">
+            <div className="flex flex-col items-center mb-4">
+              <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center text-teal-700 font-bold text-xl mb-3">
+                {user?.name?.charAt(0) || "U"}
               </div>
+              <h4 className="font-semibold text-teal-800">Your Recent Feedback</h4>
+              <p className="text-yellow-500">★★★★★</p>
             </div>
-          ))}
+            <p className="text-gray-700 leading-relaxed italic">
+              "Dr. Smith was excellent during my last visit. The facility is top-notch."
+            </p>
+          </motion.div>
+
+        </motion.div>
+      </main>
+
+      <DashboardFooter />
+
+      {/* Sticky Emergency Button */}
+      <EmergencyButton />
+
+    </div>
+  );
+}
+
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center  ">
+      <div className="flex flex-col items-center">
+        <div className="relative">
+          <div className="w-20 h-20 border-4 border-sky-200 dark:border-sky-900 border-t-sky-600 dark:border-t-sky-400 rounded-full animate-spin"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Activity className="h-8 w-8 text-sky-600 dark:text-sky-400 animate-pulse" />
+          </div>
         </div>
-      )}
-    </div>
-  );
-}
-
-function AppointmentsSection({ appointments, loading }) {
-  return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 my-10">
-      <h2 className="font-semibold text-xl text-[#1F2937] dark:text-gray-200 mb-4">Upcoming Appointments</h2>
-
-      {loading ? (
-        <p>Loading...</p>
-      ) : appointments.length === 0 ? (
-        <EmptyAppointments />
-      ) : (
-        <div className="space-y-4">
-          {appointments.map((appt) => (
-            <AppointmentCard key={appt.id} appt={appt} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function AppointmentCard({ appt }) {
-  return (
-    <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition flex justify-between">
-      <div>
-        <p className="font-semibold text-lg text-[#1F2937] dark:text-gray-200">{appt.doctorName || "Dr. John Doe"}</p>
-        <p className="text-[#6B7280] dark:text-gray-400 text-sm">{appt.department || "General Medicine"}</p>
-        <p className="text-[#6B7280] text-sm mt-1">
-          {new Date(appt.dateTime).toLocaleDateString()} •{" "}
-          {new Date(appt.dateTime).toLocaleTimeString()}
-        </p>
-      </div>
-
-      <button className="px-4 py-2 bg-[#0E9F6E] text-white rounded-lg hover:bg-[#0C8B60] transition text-sm">
-        Join Telehealth
-      </button>
-    </div>
-  );
-}
-
-function PrescriptionSection({ prescriptions }) {
-  return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 my-10">
-      <h2 className="font-semibold text-xl text-[#1F2937] dark:text-gray-200 mb-4">Prescriptions & Refills</h2>
-
-      {prescriptions.length === 0 ? (
-        <p className="text-[#6B7280]">No prescriptions yet.</p>
-      ) : (
-        <div className="space-y-4">
-          {prescriptions.map((p) => (
-            <div key={p.id} className="p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-              <p className="font-semibold text-[#1F2937] dark:text-gray-200">{p.medication}</p>
-              <p className="text-sm text-[#6B7280]">Refill on: {p.refillDate}</p>
-              <button className="mt-2 px-4 py-2 bg-[#0E9F6E] text-white rounded-lg hover:bg-[#0C8B60] text-sm">
-                Request Refill
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function HealthTipsCarousel() {
-  const tips = [
-    "Drink 2L of water daily to stay hydrated.",
-    "Walk 5,000–10,000 steps a day for better heart health.",
-    "Get 7–8 hours of sleep every night.",
-  ];
-  const [index, setIndex] = useState(0);
-
-  return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 my-10">
-      <h2 className="font-semibold text-xl text-[#1F2937] dark:text-gray-200 mb-4">Health Tips</h2>
-
-      <div className="flex items-center justify-between">
-        <button onClick={() => setIndex((i) => (i - 1 + tips.length) % tips.length)}>
-          <ChevronLeft className="text-[#0E9F6E]" />
-        </button>
-
-        <p className="text-center text-lg font-medium text-[#1F2937] dark:text-gray-200 w-full">{tips[index]}</p>
-
-        <button onClick={() => setIndex((i) => (i + 1) % tips.length)}>
-          <ChevronRight className="text-[#0E9F6E]" />
-        </button>
+        <p className="text-gray-500 dark:text-gray-400 font-medium mt-6 animate-pulse tracking-wide">Loading Experience...</p>
       </div>
     </div>
   );
 }
 
-function EmergencyCard() {
+function ErrorScreen({ msg }) {
   return (
-    <div className="bg-[#FFE8E8] dark:bg-red-900 p-6 rounded-2xl shadow-sm border border-red-300 dark:border-red-700 text-[#B91C1C] dark:text-red-200 mb-16">
-      <h2 className="font-semibold text-xl mb-2">Emergency Contact</h2>
-      <p className="text-lg font-medium">Call: 108 or +91 9876543210</p>
-      <button className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
-        Call Now
-      </button>
-    </div>
-  );
-}
-
-function EmptyAppointments() {
-  return (
-    <div className="text-center py-10">
-      <Calendar className="h-12 w-12 mx-auto text-[#0E9F6E] mb-4" />
-      <h3 className="text-lg font-semibold text-[#1F2937] dark:text-gray-200 mb-2">
-        No Appointments Yet
-      </h3>
-      <p className="text-[#6B7280] dark:text-gray-400 mb-4">
-        You&apos;re all caught up. Book a visit to stay on track with your health.
-      </p>
-
-      <button className="px-6 py-3 bg-[#0E9F6E] text-white rounded-lg font-medium hover:bg-[#0C8B60] transition">
-        Schedule Appointment
-      </button>
+    <div className="min-h-screen flex items-center justify-center   p-4">
+      <div className="text-center max-w-md p-8 bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700">
+        <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
+          <AlertCircle className="h-10 w-10" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Something went wrong</h2>
+        <p className="text-gray-500 dark:text-gray-400 mb-8">{msg}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-8 py-3 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-sky-500/30 hover:shadow-sky-500 hover:-translate-y-1"
+        >
+          Try Again
+        </button>
+      </div>
     </div>
   );
 }

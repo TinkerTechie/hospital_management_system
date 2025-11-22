@@ -49,7 +49,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-background transition-colors duration-300">
       <div
         className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 sm:p-10 
         border border-gray-100 dark:border-gray-700 animate-fadeIn"

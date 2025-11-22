@@ -17,10 +17,10 @@ export default function Navbar() {
   };
 
   // ❗Hide profile picture on landing page (page.js)
-  const hideProfileOnPages = ["/"]; 
+  const hideProfileOnPages = ["/"];
 
-  const showProfileIcon = 
-    user && 
+  const showProfileIcon =
+    user &&
     !hideProfileOnPages.includes(pathname);
 
   return (
@@ -31,7 +31,7 @@ export default function Navbar() {
           className="text-2xl font-bold text-[#00796B] cursor-pointer"
           onClick={() => router.push("/")}
         >
-          HMS
+          Medicare
         </h1>
 
         <div className="space-x-6 hidden md:flex">

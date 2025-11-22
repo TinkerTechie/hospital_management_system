@@ -85,6 +85,8 @@ model Doctor {
 
   patients               Patient[]
   appointments           Appointment[]
+  prescriptions          Prescription[]
+  medicalRecords         MedicalRecord[]
 
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
@@ -107,6 +109,8 @@ model Patient {
   doctor         Doctor?    @relation(fields: [doctorId], references: [id])
 
   appointments   Appointment[]
+  prescriptions  Prescription[]
+  medicalRecords MedicalRecord[]
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 }
@@ -199,4 +203,50 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+// =============================
+// MEDICAL RECORD MODEL
+// =============================
+model MedicalRecord {
+  id          String   @id @default(uuid())
+  patientId   String
+  doctorId    String?
+  
+  patient     Patient  @relation(fields: [patientId], references: [id])
+  doctor      Doctor?  @relation(fields: [doctorId], references: [id])
+
+  diagnosis   String
+  treatment   String?
+  notes       String?
+  date        DateTime @default(now())
+  
+  attachments Json?    // For file uploads (X-rays, reports)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// =============================
+// PRESCRIPTION MODEL
+// =============================
+model Prescription {
+  id          String   @id @default(uuid())
+  patientId   String
+  doctorId    String
+  
+  patient     Patient  @relation(fields: [patientId], references: [id])
+  doctor      Doctor   @relation(fields: [doctorId], references: [id])
+
+  medication  String
+  dosage      String
+  frequency   String
+  duration    String
+  instructions String?
+  
+  issuedDate  DateTime @default(now())
+  validUntil  DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

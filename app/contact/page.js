@@ -118,13 +118,13 @@ export default function ContactPage() {
               <div className="space-y-4 text-gray-700">
                 <p className="flex items-center gap-2">
                   <FaMapMarkerAlt className="text-[#0C7C59]" />
-                  HMS Hospital, RandomAddress, ExampleBlah, Trivandrum, Kerala
+                  Medicare Hospital, RandomAddress, ExampleBlah, Trivandrum, Kerala
                 </p>
                 <p className="flex items-center gap-2">
                   <FaPhoneAlt className="text-[#0C7C59]" /> +91 123 456 7890
                 </p>
                 <p className="flex items-center gap-2">
-                  <FaEnvelope className="text-[#0C7C59]" /> feedback@hms.org
+                  <FaEnvelope className="text-[#0C7C59]" /> feedback@medicare.org
                 </p>
               </div>
 
@@ -272,7 +272,7 @@ export default function ContactPage() {
               height="400"
               allowFullScreen=""
               loading="lazy"
-              title="HMS Hospital Location"
+              title="Medicare Hospital Location"
             ></iframe>
           </div>
         </div>

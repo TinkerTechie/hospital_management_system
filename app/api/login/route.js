@@ -29,7 +29,7 @@ export async function POST(req) {
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
     }
-    
+
     // ⬅️ JWT ADDED BELOW
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
@@ -37,6 +37,15 @@ export async function POST(req) {
       { expiresIn: "7d" }
     );
     console.log(token)
+
+    const headers = new Headers();
+    headers.set("Content-Type", "application/json");
+
+    // Set JWT token as HTTP-only cookie
+    headers.set(
+      "Set-Cookie",
+      `token=${token}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${7 * 24 * 60 * 60}`
+    );
 
     return new Response(
       JSON.stringify({
@@ -47,11 +56,11 @@ export async function POST(req) {
           name: user.name,
           email: user.email,
           role: user.role,
-          token : token
+          token: token
         },
         token, // ⬅️ ADDED
       }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      { status: 200, headers }
     );
   } catch (err) {
     console.error("Login error:", err);

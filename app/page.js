@@ -18,6 +18,7 @@ import doct4 from "../public/assets/doct4.jpg";
 import doct5 from "../public/assets/doct5.jpg";
 import feedback from "../public/assets/feedback.png";
 import review from "../public/assets/review.jpg";
+import Footer from "./components/shared/Footer";
 
 export default function Home() {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.3 });
@@ -50,7 +51,7 @@ export default function Home() {
       <header className="bg-teal-600 text-white shadow-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between py-4 px-6">
           <Link href="/" className="text-2xl font-bold tracking-wide">
-            🏥 HealthCare HMS
+            🏥 Medicare
           </Link>
           <nav className="flex items-center gap-6 text-sm font-medium">
             <Link href="/" className="hover:text-teal-200">
@@ -198,7 +199,7 @@ export default function Home() {
               </div>
             </div>
             <p className="text-gray-700 leading-relaxed">
-              “I have visited many hospitals but HMS stands out as one of the best in the world.
+              “I have visited many hospitals but Medicare stands out as one of the best in the world.
               From reception to private rooms, the hospitality and care were exceptional.”
             </p>
           </div>
@@ -207,7 +208,7 @@ export default function Home() {
 
       {/* 📰 Newsletter */}
       <section className="py-20 bg-gradient-to-r from-teal-600 to-cyan-600 text-center text-white">
-        <h3 className="text-2xl font-semibold mb-4">Stay Updated with HMS</h3>
+        <h3 className="text-2xl font-semibold mb-4">Stay Updated with Medicare</h3>
         <p className="text-sm text-teal-100 mb-8">
           Subscribe to receive healthcare tips, new services, and hospital news.
         </p>
@@ -233,9 +234,7 @@ export default function Home() {
       </section>
 
       {/* ⚡ Footer */}
-      <footer className="bg-gray-900 text-gray-300 text-center py-6 text-sm">
-        © {new Date().getFullYear()} HealthCare HMS. All rights reserved.
-      </footer>
+      <Footer />
     </main>
   );
 }
