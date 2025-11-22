@@ -5,12 +5,13 @@ const prisma = new PrismaClient();
 
 export async function GET() {
     try {
-        const services = await prisma.neurologyService.findMany({
+        const services = await prisma.orthopedicService.findMany({
             orderBy: {
                 createdAt: 'asc'
             }
         });
 
+        // Transform database format to API format
         const formattedServices = services.map(service => ({
             id: service.serviceId,
             title: service.title,
@@ -23,7 +24,7 @@ export async function GET() {
 
         return NextResponse.json(formattedServices);
     } catch (error) {
-        console.error('Error fetching neurology services:', error);
+        console.error('Error fetching orthopedic services:', error);
         return NextResponse.json({ error: 'Failed to fetch services' }, { status: 500 });
     }
 }

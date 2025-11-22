@@ -410,22 +410,22 @@ export default function CardiologyPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {[
                             {
-                                name: "Dr. Robert Chen",
+                                name: "Dr. Rajesh Kumar",
                                 role: "Chief Cardiologist",
                                 spec: "Interventional Cardiology",
-                                image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=2070&auto=format&fit=crop"
+                                image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=800&q=80"
                             },
                             {
-                                name: "Dr. Sarah Miller",
-                                role: "Senior Consultant",
+                                name: "Dr. Priya Sharma",
+                                role: "Senior Cardiologist",
                                 spec: "Electrophysiology",
-                                image: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=2070&auto=format&fit=crop"
+                                image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=800&q=80"
                             },
                             {
-                                name: "Dr. James Wilson",
-                                role: "Surgeon",
-                                spec: "Cardiothoracic Surgery",
-                                image: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=1964&auto=format&fit=crop"
+                                name: "Dr. Amit Patel",
+                                role: "Cardiac Surgeon",
+                                spec: "Cardiac Surgery",
+                                image: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=800&q=80"
                             }
                         ].map((doc, i) => (
                             <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100 group">

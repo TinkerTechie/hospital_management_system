@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 export async function GET() {
     try {
-        const services = await prisma.neurologyService.findMany({
+        const services = await prisma.pediatricsService.findMany({
             orderBy: {
                 createdAt: 'asc'
             }
@@ -23,7 +23,7 @@ export async function GET() {
 
         return NextResponse.json(formattedServices);
     } catch (error) {
-        console.error('Error fetching neurology services:', error);
+        console.error('Error fetching pediatrics services:', error);
         return NextResponse.json({ error: 'Failed to fetch services' }, { status: 500 });
     }
 }

@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import PatientDashboardSidebar from "../../../components/patient/PatientDashboardSidebar";
-import { Calendar, Clock, MapPin, Video, Stethoscope, MoreVertical, CheckCircle, AlertCircle } from "lucide-react";
+import { Calendar, Clock, MapPin, Video, Stethoscope, MoreVertical, CheckCircle, AlertCircle, FileText } from "lucide-react";
+import Link from "next/link";
 
 export default function PatientAppointmentsPage() {
   const [dark, setDark] = useState(false);
@@ -142,9 +143,14 @@ export default function PatientAppointmentsPage() {
                           </button>
                         </>
                       ) : (
-                        <button className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors whitespace-nowrap">
-                          View Summary
-                        </button>
+                        <div className="flex gap-2">
+                          <button className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors whitespace-nowrap">
+                            Summary
+                          </button>
+                          <Link href="/dashboard/patient/records" className="px-4 py-2 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 text-sm font-medium rounded-lg hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors whitespace-nowrap flex items-center gap-1">
+                            <FileText className="h-3 w-3" /> View Report
+                          </Link>
+                        </div>
                       )}
                     </div>
                   </div>

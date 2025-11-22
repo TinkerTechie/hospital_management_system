@@ -39,31 +39,31 @@ model User {
   resetToken       String?
   resetTokenExpiry DateTime?
 
-  doctorProfile    Doctor?
-  nurseProfile     Nurse?
-  patientProfile   Patient?
+  doctorProfile  Doctor?
+  nurseProfile   Nurse?
+  patientProfile Patient?
 
-  accounts         Account[]
-  sessions         Session[]
+  accounts Account[]
+  sessions Session[]
 }
 
 // =============================
 // DOCTOR MODEL
 // =============================
 model Doctor {
-  id                     String   @id @default(uuid())
-  userId                 String   @unique
-  user                   User     @relation(fields: [userId], references: [id])
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
 
-  fullName               String
-  dob                    DateTime?
-  gender                 String?
-  phone                  String?
-  address                String?
-  profilePicUrl          String?
+  fullName      String
+  dob           DateTime?
+  gender        String?
+  phone         String?
+  address       String?
+  profilePicUrl String?
 
   // 🔥 FIXED: Made optional so signup does NOT break
-  licenseNumber          String?  @unique  
+  licenseNumber String? @unique
 
   registrationState      String?
   medicalCouncil         String?
@@ -71,78 +71,78 @@ model Doctor {
   specialization         String?
   yearsOfExperience      Int?
   currentHospital        String?
-  workType               String   @default("Full-time")
+  workType               String  @default("Full-time")
   consultationFee        Float?
   documentUrls           Json?
   workingDays            Json?
   startTime              String?
   endTime                String?
-  enableTeleconsultation Boolean  @default(false)
+  enableTeleconsultation Boolean @default(false)
   bio                    String?
   languages              String?
   emergencyContactName   String?
   emergencyContactNumber String?
 
-  patients               Patient[]
-  appointments           Appointment[]
-  prescriptions          Prescription[]
-  medicalRecords         MedicalRecord[]
+  patients       Patient[]
+  appointments   Appointment[]
+  prescriptions  Prescription[]
+  medicalRecords MedicalRecord[]
 
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // =============================
 // PATIENT MODEL
 // =============================
 model Patient {
-  id             String     @id @default(uuid())
-  userId         String     @unique
-  user           User       @relation(fields: [userId], references: [id])
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
 
   fullName       String
   age            Int?
   bloodGroup     String?
   medicalHistory String?
 
-  doctorId       String?
-  doctor         Doctor?    @relation(fields: [doctorId], references: [id])
+  doctorId String?
+  doctor   Doctor? @relation(fields: [doctorId], references: [id])
 
   appointments   Appointment[]
   prescriptions  Prescription[]
   medicalRecords MedicalRecord[]
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 }
 
 // =============================
 // NURSE MODEL
 // =============================
 model Nurse {
-  id           String   @id @default(uuid())
-  userId       String   @unique
-  user         User     @relation(fields: [userId], references: [id])
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
 
   fullName     String
   shiftTiming  String?
   assignedWard String?
   phone        String?
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // =============================
 // APPOINTMENT MODEL
 // =============================
 model Appointment {
-  id              String    @id @default(uuid())
+  id String @id @default(uuid())
 
-  patientId       String
-  doctorId        String
+  patientId String
+  doctorId  String
 
-  patient         Patient   @relation(fields: [patientId], references: [id])
-  doctor          Doctor    @relation(fields: [doctorId], references: [id])
+  patient Patient @relation(fields: [patientId], references: [id])
+  doctor  Doctor  @relation(fields: [doctorId], references: [id])
 
   appointmentDate DateTime
   time            String?
@@ -151,7 +151,7 @@ model Appointment {
   email           String?
   phone           String?
 
-  createdAt       DateTime  @default(now())
+  createdAt DateTime @default(now())
 }
 
 // =============================
@@ -194,7 +194,7 @@ model Session {
   userId       String
   expires      DateTime
 
-  user         User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 }
 
 model VerificationToken {
@@ -209,44 +209,244 @@ model VerificationToken {
 // MEDICAL RECORD MODEL
 // =============================
 model MedicalRecord {
-  id          String   @id @default(uuid())
-  patientId   String
-  doctorId    String?
-  
-  patient     Patient  @relation(fields: [patientId], references: [id])
-  doctor      Doctor?  @relation(fields: [doctorId], references: [id])
+  id        String  @id @default(uuid())
+  patientId String
+  doctorId  String?
 
-  diagnosis   String
-  treatment   String?
-  notes       String?
-  date        DateTime @default(now())
-  
-  attachments Json?    // For file uploads (X-rays, reports)
+  patient Patient @relation(fields: [patientId], references: [id])
+  doctor  Doctor? @relation(fields: [doctorId], references: [id])
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  diagnosis String
+  treatment String?
+  notes     String?
+  date      DateTime @default(now())
+
+  attachments Json? // For file uploads (X-rays, reports)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // =============================
 // PRESCRIPTION MODEL
 // =============================
 model Prescription {
-  id          String   @id @default(uuid())
-  patientId   String
-  doctorId    String
-  
-  patient     Patient  @relation(fields: [patientId], references: [id])
-  doctor      Doctor   @relation(fields: [doctorId], references: [id])
+  id        String @id @default(uuid())
+  patientId String
+  doctorId  String
 
-  medication  String
-  dosage      String
-  frequency   String
-  duration    String
+  patient Patient @relation(fields: [patientId], references: [id])
+  doctor  Doctor  @relation(fields: [doctorId], references: [id])
+
+  medication   String
+  dosage       String
+  frequency    String
+  duration     String
   instructions String?
-  
-  issuedDate  DateTime @default(now())
-  validUntil  DateTime?
 
+  issuedDate DateTime  @default(now())
+  validUntil DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// =============================
+// ORTHOPEDICS MODELS
+// =============================
+model OrthopedicService {
+  id             String @id @default(uuid())
+  serviceId      String @unique
+  title          String
+  shortDesc      String
+  fullDesc       String
+  procedureSteps Json // Array of strings
+  eligibility    String
+  image          String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrthopedicCondition {
+  id          String @id @default(uuid())
+  conditionId String @unique
+  name        String
+  description String
+  symptoms    Json // Array of strings
+  diagnosis   String
+  treatment   String
+  prevention  String
+  image       String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrthopedicResource {
+  id          String  @id @default(uuid())
+  resourceId  String  @unique
+  title       String
+  icon        String
+  color       String
+  description String
+  content     Json // Array of {section, points}
+  videoUrl    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// =============================
+// CARDIOLOGY MODELS
+// =============================
+model CardiologyService {
+  id              String   @id @default(uuid())
+  serviceId       String   @unique
+  title           String
+  shortDesc       String
+  fullDesc        String
+  procedureSteps  Json     // Array of strings
+  eligibility     String
+  image           String
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model CardiologyCondition {
+  id          String   @id @default(uuid())
+  conditionId String   @unique
+  name        String
+  description String
+  symptoms    Json     // Array of strings
+  diagnosis   String
+  treatment   String
+  prevention  String
+  image       String
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// =============================
+// NEUROLOGY MODELS
+// =============================
+model NeurologyService {
+  id              String   @id @default(uuid())
+  serviceId       String   @unique
+  title           String
+  shortDesc       String
+  fullDesc        String
+  procedureSteps  Json     // Array of strings
+  eligibility     String
+  image           String
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model NeurologyCondition {
+  id          String   @id @default(uuid())
+  conditionId String   @unique
+  name        String
+  description String
+  symptoms    Json     // Array of strings
+  diagnosis   String
+  treatment   String
+  prevention  String
+  image       String
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// =============================
+// PEDIATRICS MODELS
+// =============================
+model PediatricsService {
+  id              String   @id @default(uuid())
+  serviceId       String   @unique
+  title           String
+  shortDesc       String
+  fullDesc        String
+  procedureSteps  Json     // Array of strings
+  eligibility     String
+  image           String
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model PediatricsCondition {
+  id          String   @id @default(uuid())
+  conditionId String   @unique
+  name        String
+  description String
+  symptoms    Json     // Array of strings
+  diagnosis   String
+  treatment   String
+  prevention  String
+  image       String
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// =============================
+// DIAGNOSTICS MODELS
+// =============================
+model DiagnosticService {
+  id           String   @id @default(uuid())
+  serviceId    String   @unique
+  name         String
+  category     String   // Pathology, Radiology, Blood Tests, etc.
+  description  String
+  price        Float
+  duration     String   // e.g., "2-4 hours", "Same day"
+  preparation  Json     // Array of preparation instructions
+  image        String
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model DiagnosticPackage {
+  id            String   @id @default(uuid())
+  packageId     String   @unique
+  name          String
+  description   String
+  tests         Json     // Array of test names included
+  price         Float
+  discountPrice Float?
+  popular       Boolean  @default(false)
+  image         String
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model DiagnosticExpert {
+  id             String   @id @default(uuid())
+  expertId       String   @unique
+  name           String
+  role           String
+  specialization String
+  experience     String
+  certifications Json     // Array of certifications
+  image          String
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model DiagnosticFacility {
+  id          String   @id @default(uuid())
+  facilityId  String   @unique
+  name        String
+  description String
+  image       String
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

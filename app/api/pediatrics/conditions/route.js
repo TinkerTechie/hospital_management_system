@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 export async function GET() {
     try {
-        const conditions = await prisma.cardiologyCondition.findMany({
+        const conditions = await prisma.pediatricsCondition.findMany({
             orderBy: {
                 createdAt: 'asc'
             }
@@ -24,7 +24,7 @@ export async function GET() {
 
         return NextResponse.json(formattedConditions);
     } catch (error) {
-        console.error('Error fetching cardiology conditions:', error);
+        console.error('Error fetching pediatrics conditions:', error);
         return NextResponse.json({ error: 'Failed to fetch conditions' }, { status: 500 });
     }
 }

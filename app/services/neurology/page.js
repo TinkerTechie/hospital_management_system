@@ -413,13 +413,13 @@ export default function NeurologyPage() {
                     </div>
                     <div className="grid md:grid-cols-3 gap-8">
                         {[
-                            { name: "Dr. Sarah Chen", role: "Chief Neurologist", specialty: "Stroke & Cerebrovascular Disease", image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=2070&auto=format&fit=crop" },
-                            { name: "Dr. James Wilson", role: "Epileptologist", specialty: "Epilepsy & Seizure Disorders", image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=2070&auto=format&fit=crop" },
-                            { name: "Dr. Emily Rodriguez", role: "Neurosurgeon", specialty: "Spine & Peripheral Nerve Surgery", image: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=2070&auto=format&fit=crop" }
+                            { name: "Dr. Anjali Desai", role: "Chief Neurologist", specialty: "Stroke & Cerebrovascular Disease", image: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=800&q=80" },
+                            { name: "Dr. Karthik Menon", role: "Epileptologist", specialty: "Epilepsy & Seizure Disorders", image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=800&q=80" },
+                            { name: "Dr. Lakshmi Nair", role: "Neurosurgeon", specialty: "Spine & Peripheral Nerve Surgery", image: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=800&q=80" }
                         ].map((doctor, i) => (
                             <div key={i} className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 group">
                                 <div className="h-64 overflow-hidden">
-                                    <img src={doctor.image} alt={doctor.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                    <img src={doctor.image} alt={`Indian neurologist ${doctor.name}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                 </div>
                                 <div className="p-6 text-center">
                                     <h3 className="text-xl font-bold text-gray-900 mb-1">{doctor.name}</h3>

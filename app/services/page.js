@@ -226,7 +226,20 @@ export default function ServicesPage() {
                                         {service.desc}
                                     </p>
 
-                                    <Link href={service.title === "Cardiology" ? "/services/cardiology" : service.title === "Neurology" ? "/services/neurology" : "#"} className="text-teal-600 font-semibold text-sm flex items-center gap-1 group-hover:gap-2 transition-all">
+                                    <Link
+                                        href={
+                                            service.title === "Cardiology" ? "/services/cardiology" :
+                                                service.title === "Neurology" ? "/services/neurology" :
+                                                    service.title === "Pediatrics" ? "/services/pediatrics" :
+                                                        service.title === "Orthopedics" ? "/services/orthopedics" :
+                                                            service.title === "Diagnostics" ? "/diagnostics" :
+                                                                service.title === "Emergency Care" ? "/emergency" :
+                                                                    service.title === "General Medicine" ? "/services/general-medicine" :
+                                                                        service.title === "Rehabilitation" ? "/services/rehabilitation" :
+                                                                            "#"
+                                        }
+                                        className="text-teal-600 font-semibold text-sm flex items-center gap-1 group-hover:gap-2 transition-all"
+                                    >
                                         Learn More <ArrowRight className="h-4 w-4" />
                                     </Link>
                                 </motion.div>
