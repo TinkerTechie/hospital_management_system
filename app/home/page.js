@@ -15,7 +15,7 @@ export default function HomePage() {
         title: "Login Required",
         text: "Please login to continue",
         icon: "info",
-      }).then(() => router.push("/login"));
+      }).then(() => router.push("/auth"));
     } else {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setUser(JSON.parse(stored));

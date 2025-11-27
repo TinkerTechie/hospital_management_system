@@ -5,8 +5,12 @@ import { Stethoscope } from 'lucide-react';
 import LoginForm from './LoginForm';
 import { SignUpForm } from './SignUpForm';
 
+import { useSearchParams } from 'next/navigation';
+
 export default function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true);
+  const searchParams = useSearchParams();
+  const mode = searchParams.get('mode');
+  const [isLogin, setIsLogin] = useState(mode !== 'signup');
 
   return (
     <>

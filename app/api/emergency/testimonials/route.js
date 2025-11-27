@@ -1,29 +1,76 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export async function GET() {
-    const testimonials = [
-        {
-            id: 1,
-            name: "Vikram Malhotra",
-            location: "Mumbai",
-            quote: "The speed at which the ER team responded to my father's heart attack was incredible. They saved his life.",
-            image: "https://placehold.co/100x100/111827/FFFFFF?text=VM"
-        },
-        {
-            id: 2,
-            name: "Sneha Patel",
-            location: "Pune",
-            quote: "I was rushed in after a severe road accident. The trauma care was world-class, and the nurses were so supportive.",
-            image: "https://placehold.co/100x100/111827/FFFFFF?text=SP"
-        },
-        {
-            id: 3,
-            name: "Rahul Gupta",
-            location: "Delhi",
-            quote: "Pediatric ER handled my son's asthma attack with such care. They kept us calm and acted fast.",
-            image: "https://placehold.co/100x100/111827/FFFFFF?text=RG"
-        }
-    ];
+    try {
+        // Fetch emergency department reviews
+        const emergencyReviews = await prisma.review.findMany({
+            where: {
+                targetType: "DEPARTMENT",
+                department: {
+                    equals: "Emergency",
+                    mode: "insensitive",
+                },
+            },
+            include: {
+                reviewer: {
+                    select: {
+                        name: true,
+                        role: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+            take: 5,
+        });
 
-    return NextResponse.json(testimonials);
+        // If no emergency reviews, fall back to hospital reviews
+        if (emergencyReviews.length === 0) {
+            const hospitalReviews = await prisma.review.findMany({
+                where: {
+                    targetType: "HOSPITAL",
+                },
+                include: {
+                    reviewer: {
+                        select: {
+                            name: true,
+                            role: true,
+                        },
+                    },
+                },
+                orderBy: {
+                    createdAt: "desc",
+                },
+                take: 5,
+            });
+
+            // Format for emergency page
+            return NextResponse.json(
+                hospitalReviews.map((review) => ({
+                    name: review.reviewer?.name || "Anonymous",
+                    role: review.reviewer?.role || "Patient",
+                    quote: review.comment || "Great experience at Medicare Hospital!",
+                    rating: review.rating,
+                }))
+            );
+        }
+
+        // Format emergency reviews
+        return NextResponse.json(
+            emergencyReviews.map((review) => ({
+                name: review.reviewer?.name || "Anonymous",
+                role: review.reviewer?.role || "Patient",
+                quote: review.comment || "Excellent emergency care!",
+                rating: review.rating,
+            }))
+        );
+    } catch (error) {
+        console.error("Error fetching emergency testimonials:", error);
+        // Return empty array on error
+        return NextResponse.json([]);
+    }
 }

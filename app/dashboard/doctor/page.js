@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import DoctorDashboardSidebar from "../../components/doctor/DoctorDashboardSidebar";
+import DoctorNavbar from "../../components/doctor/DoctorNavbar";
+import PatientUpdateForm from "../../components/shared/PatientUpdateForm";
+import GlobalSearch from "../../components/GlobalSearch";
 import {
   Users,
   Calendar,
@@ -9,7 +12,8 @@ import {
   AlertCircle,
   FileText,
   Search,
-  MoreVertical
+  MoreVertical,
+  FilePlus
 } from "lucide-react";
 import Link from "next/link";
 
@@ -24,6 +28,8 @@ export default function DoctorDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dark, setDark] = useState(false);
+  const [showUpdateForm, setShowUpdateForm] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
     // Theme check
@@ -48,7 +54,7 @@ export default function DoctorDashboardPage() {
     async function fetchData() {
       try {
         const res = await fetch("/api/doctor");
-        if (res.status === 401) {
+        if (res.status === 401 || res.status === 404) {
           window.location.href = "/auth"; // Redirect to custom login page
           return;
         }
@@ -77,14 +83,41 @@ export default function DoctorDashboardPage() {
     localStorage.setItem("theme", next ? "dark" : "light");
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    window.location.href = "/auth";
+  };
+
+  // Global search keyboard shortcut (Cmd+K / Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowSearch(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <div className={dark ? "dark" : ""}>
-      <div className="  min-h-screen flex font-sans text-gray-900 transition-colors duration-300">
+      {/* Navbar */}
+      <DoctorNavbar
+        user={user}
+        handleLogout={handleLogout}
+        onSearchClick={() => setShowSearch(true)}
+      />
+
+      <div className="min-h-screen flex font-sans bg-gradient-to-br from-gray-50 via-teal-50/30 to-gray-50 dark:from-gray-900 dark:via-teal-900/10 dark:to-gray-900 transition-colors duration-300">
         {/* Sidebar */}
         <div className="hidden md:block">
           <DoctorDashboardSidebar
-            userName={user?.name || "Doctor"}
+            userName={user?.name}
             profilePic={user?.image || profilePic}
+            dark={dark}
+            toggleDark={toggleDark}
           />
         </div>
 
@@ -92,7 +125,7 @@ export default function DoctorDashboardPage() {
         <main className="flex-1 p-6 md:p-10 max-w-7xl mx-auto overflow-y-auto">
 
           {/* Header */}
-          <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+          <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                 Welcome back, Dr. {user?.name?.split(" ")[0] || "Doctor"}
@@ -102,30 +135,22 @@ export default function DoctorDashboardPage() {
               </p>
 
               {!loading && !error && !doctorProfile && (
-                <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 text-sm rounded-lg border border-amber-100 dark:border-amber-800 flex items-center gap-2">
+                <Link href="/dashboard/doctor/profile" className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 text-sm rounded-lg border border-amber-100 dark:border-amber-800 flex items-center gap-2 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors">
                   <AlertCircle className="h-4 w-4" />
                   <span>Your profile is incomplete. Please update your details in Settings.</span>
-                </div>
+                </Link>
               )}
             </div>
 
             <div className="flex items-center gap-4 self-end md:self-auto">
               <button
                 onClick={toggleDark}
-                className="p-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:shadow-md transition-all"
+                className="p-2.5 rounded-xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:shadow-md transition-all"
               >
                 {dark ? "☀" : "🌙"}
               </button>
 
-              <div className="relative hidden md:block">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search patients..."
-                  className="pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all w-64 text-gray-800 dark:text-white placeholder-gray-400"
-                />
-              </div>
-              <button className="p-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-600 dark:text-gray-300 hover: dark:hover:bg-gray-700 transition-colors relative">
+              <button className="p-2.5 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-gray-200 dark:border-gray-700 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors relative">
                 <AlertCircle className="h-5 w-5" />
                 <span className="absolute top-2 right-2.5 h-2 w-2 bg-red-500 rounded-full border border-white dark:border-gray-800"></span>
               </button>
@@ -167,7 +192,7 @@ export default function DoctorDashboardPage() {
 
                 {/* Left Column: Appointments */}
                 <div className="lg:col-span-2 space-y-8">
-                  <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+                  <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
                     <div className="flex justify-between items-center mb-6">
                       <h3 className="font-bold text-lg text-gray-800 dark:text-white">Upcoming Appointments</h3>
                       <Link href="/dashboard/doctor/appointments" className="text-sm text-teal-600 dark:text-teal-400 font-medium hover:text-teal-700 dark:hover:text-teal-300">View Calendar</Link>
@@ -233,12 +258,10 @@ export default function DoctorDashboardPage() {
                 <div className="space-y-8">
 
                   {/* Recent Patients */}
-                  <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+                  <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
                     <div className="flex justify-between items-center mb-6">
                       <h3 className="font-bold text-lg text-gray-800 dark:text-white">Recent Patients</h3>
-                      <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                        <MoreVertical className="h-5 w-5 text-gray-400" />
-                      </button>
+                      <Link href="/dashboard/doctor/patients" className="text-sm text-teal-600 dark:text-teal-400 font-medium hover:text-teal-700 dark:hover:text-teal-300">View All</Link>
                     </div>
 
                     {recentPatients.length === 0 ? (
@@ -270,16 +293,38 @@ export default function DoctorDashboardPage() {
                   </div>
 
                   {/* Quick Actions */}
-                  <div className="bg-gradient-to-br from-teal-600 to-teal-700 rounded-2xl p-6 text-white shadow-lg">
-                    <h3 className="font-bold text-lg mb-4">Quick Actions</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Link href="/dashboard/doctor/appointments" className="p-3 bg-white/10 hover:bg-white/20 rounded-xl backdrop-blur-sm transition-colors text-left block">
-                        <Calendar className="h-5 w-5 mb-2 opacity-80" />
-                        <span className="text-sm font-medium">New Appt</span>
+                  <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-white">Quick Actions</h3>
+                    <div className="space-y-3">
+                      <button
+                        onClick={() => setShowUpdateForm(true)}
+                        className="w-full flex items-center gap-3 p-3 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 rounded-xl hover:bg-teal-100 dark:hover:bg-teal-900/30 transition-colors group"
+                      >
+                        <div className="w-10 h-10 bg-teal-100 dark:bg-teal-800/50 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <FilePlus className="h-5 w-5" />
+                        </div>
+                        <div className="text-left">
+                          <p className="font-semibold">Add Patient Update</p>
+                          <p className="text-xs text-teal-600 dark:text-teal-400">Create report or prescription</p>
+                        </div>
+                      </button>
+                      <Link href="/dashboard/doctor/appointments" className="w-full flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors group">
+                        <div className="w-10 h-10 bg-blue-100 dark:bg-blue-800/50 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Calendar className="h-5 w-5" />
+                        </div>
+                        <div className="text-left">
+                          <p className="font-semibold">View Schedule</p>
+                          <p className="text-xs text-blue-600 dark:text-blue-400">Check all appointments</p>
+                        </div>
                       </Link>
-                      <Link href="/dashboard/doctor/patients" className="p-3 bg-white/10 hover:bg-white/20 rounded-xl backdrop-blur-sm transition-colors text-left block">
-                        <Users className="h-5 w-5 mb-2 opacity-80" />
-                        <span className="text-sm font-medium">Add Patient</span>
+                      <Link href="/dashboard/doctor/patients" className="w-full flex items-center gap-3 p-3 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-xl hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors group">
+                        <div className="w-10 h-10 bg-purple-100 dark:bg-purple-800/50 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Users className="h-5 w-5" />
+                        </div>
+                        <div className="text-left">
+                          <p className="font-semibold">Patient List</p>
+                          <p className="text-xs text-purple-600 dark:text-purple-400">View all patients</p>
+                        </div>
                       </Link>
                     </div>
                   </div>
@@ -290,6 +335,19 @@ export default function DoctorDashboardPage() {
           )}
         </main>
       </div>
+
+      {/* Global Search Modal */}
+      <GlobalSearch isOpen={showSearch} onClose={() => setShowSearch(false)} />
+
+      {/* Patient Update Form Modal */}
+      <PatientUpdateForm
+        isOpen={showUpdateForm}
+        onClose={() => setShowUpdateForm(false)}
+        onSuccess={() => {
+          // Optionally refresh data
+          fetchData();
+        }}
+      />
     </div>
   );
 }
@@ -355,4 +413,3 @@ function ErrorScreen({ msg }) {
     </div>
   );
 }
-

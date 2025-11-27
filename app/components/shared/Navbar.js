@@ -1,140 +1,106 @@
 "use client";
+
 import Link from "next/link";
-import Image from "next/image";
-import { useState, useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { logout } from "../../../src/redux/UserSlice";
-import { useRouter, usePathname } from "next/navigation";
-import { Search } from "lucide-react";
-import GlobalSearch from "../GlobalSearch";
+import { useState } from "react";
+import { Menu, X, Home, Info, Stethoscope, Phone, Calendar, ChevronDown, LogIn, UserPlus } from "lucide-react";
 
 export default function Navbar() {
-  const user = useSelector((state) => state.user.user);
-  const dispatch = useDispatch();
-  const router = useRouter();
-  const pathname = usePathname();
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-
-  // Keyboard shortcut for search (Cmd/Ctrl + K)
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setIsSearchOpen(true);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  const handleLogout = () => {
-    dispatch(logout());
-    router.push("/login");
-  };
-
-  // ❗Hide profile picture on landing page (page.js)
-  const hideProfileOnPages = ["/"];
-
-  const showProfileIcon =
-    user &&
-    !hideProfileOnPages.includes(pathname);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <>
-      <nav className="fixed top-0 left-0 w-full z-50 bg-white/90 shadow-sm backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+    <header className="bg-teal-600 text-white shadow-md sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto flex items-center justify-between py-4 px-6">
+        <Link href="/" className="text-2xl font-bold tracking-wide flex items-center gap-2">
+          <span>🏥</span> Medicare
+        </Link>
 
-          <h1
-            className="text-2xl font-bold text-[#00796B] cursor-pointer"
-            onClick={() => router.push("/")}
-          >
-            Medicare
-          </h1>
+        {/* Desktop Nav */}
+        <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+          <Link href="/" className="hover:text-teal-200 transition flex items-center gap-1">
+            <Home size={16} /> Home
+          </Link>
+          <Link href="/about" className="hover:text-teal-200 transition flex items-center gap-1">
+            <Info size={16} /> About Us
+          </Link>
+          <Link href="/services" className="hover:text-teal-200 transition flex items-center gap-1">
+            <Stethoscope size={16} /> Services
+          </Link>
+          <Link href="/departments" className="hover:text-teal-200 transition flex items-center gap-1">
+            <ChevronDown size={16} /> Departments
+          </Link>
+          <Link href="/appointments" className="hover:text-teal-200 transition flex items-center gap-1">
+            <Calendar size={16} /> Appointments
+          </Link>
+          <Link href="/contact" className="hover:text-teal-200 transition flex items-center gap-1">
+            <Phone size={16} /> Contact
+          </Link>
 
-          <div className="space-x-6 hidden md:flex">
-
-            {/* Always show these links */}
-            <Link href="/" className="text-gray-800 font-medium hover:text-[#00796B] transition">Home</Link>
-            <Link href="/appointments" className="text-gray-800 font-medium hover:text-[#00796B] transition">Appointment</Link>
-            <Link href="/about" className="text-gray-800 font-medium hover:text-[#00796B] transition">About Us</Link>
-            <Link href="/contact" className="text-gray-800 font-medium hover:text-[#00796B] transition">Contact Us</Link>
-
-          </div>
-
-          {/* RIGHT SIDE */}
-          <div className="flex items-center gap-4">
-
-            {/* Search Button */}
-            <button
-              onClick={() => setIsSearchOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors group border border-gray-300"
-              title="Search (Cmd/Ctrl + K)"
+          <div className="flex items-center gap-3 ml-4">
+            <Link
+              href="/auth"
+              className="bg-white text-teal-700 px-4 py-2 rounded-md hover:bg-teal-50 transition shadow-sm font-semibold flex items-center gap-1"
             >
-              <Search className="h-5 w-5 text-gray-700 group-hover:text-gray-900" />
-              <span className="hidden lg:inline text-sm font-semibold text-gray-800 group-hover:text-gray-900">Search</span>
-              <kbd className="hidden lg:inline px-2 py-0.5 text-xs font-semibold bg-white border border-gray-400 rounded text-gray-700">⌘K</kbd>
-            </button>
-
-            {/* Emergency Button - Always Visible */}
-            <Link href="/emergency" className="bg-red-600 text-white px-4 py-2 rounded-full font-bold hover:bg-red-700 transition flex items-center gap-2 animate-pulse shadow-lg shadow-red-500/30">
-              <span className="hidden md:inline">Emergency</span> 1066
+              <LogIn size={16} /> Login
             </Link>
-
-            {/* 🔥 If user is NOT logged in — show LOGIN/SIGNUP */}
-            {!user && (
-              <>
-                <Link
-                  href="/login"
-                  className="bg-[#00796B] text-white px-5 py-2 rounded-full font-semibold hover:bg-[#00695C] transition"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/signup"
-                  className="border-2 border-[#00796B] text-[#00796B] px-5 py-2 rounded-full font-semibold hover:bg-[#00796B] hover:text-white transition"
-                >
-                  Sign Up
-                </Link>
-              </>
-            )}
-
-            {/* 🔥 If user IS logged in — show profile icon */}
-            {showProfileIcon && (
-              <div className="relative group">
-                <div className="w-10 h-10 bg-[#00796B] text-white rounded-full flex items-center justify-center font-bold cursor-pointer">
-                  {user.name?.charAt(0).toUpperCase()}
-                </div>
-
-                {/* Dropdown */}
-                <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg hidden group-hover:block">
-                  <Link
-                    href="/dashboard/patient"
-                    className="block px-4 py-2 hover:bg-gray-100 transition"
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    href="/dashboard/patient/profile"
-                    className="block px-4 py-2 hover:bg-gray-100 transition"
-                  >
-                    Profile
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100 transition text-red-600"
-                  >
-                    Logout
-                  </button>
-                </div>
-              </div>
-            )}
+            <Link
+              href="/auth?mode=signup"
+              className="bg-yellow-400 text-black px-4 py-2 rounded-md hover:bg-yellow-300 transition shadow-sm font-semibold flex items-center gap-1"
+            >
+              <UserPlus size={16} /> Sign Up
+            </Link>
           </div>
-        </div>
-      </nav>
+        </nav>
 
-      {/* Global Search Modal */}
-      <GlobalSearch isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
-    </>
+        {/* Mobile Menu Button */}
+        <button
+          className="md:hidden text-white focus:outline-none"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? <X size={28} /> : <Menu size={28} />}
+        </button>
+      </div>
+
+      {/* Mobile Nav */}
+      {isOpen && (
+        <div className="md:hidden bg-teal-700 border-t border-teal-500">
+          <nav className="flex flex-col p-4 space-y-3 text-sm font-medium">
+            <Link href="/" className="hover:text-teal-200 flex items-center gap-2" onClick={() => setIsOpen(false)}>
+              <Home size={18} /> Home
+            </Link>
+            <Link href="/about" className="hover:text-teal-200 flex items-center gap-2" onClick={() => setIsOpen(false)}>
+              <Info size={18} /> About Us
+            </Link>
+            <Link href="/services" className="hover:text-teal-200 flex items-center gap-2" onClick={() => setIsOpen(false)}>
+              <Stethoscope size={18} /> Services
+            </Link>
+            <Link href="/departments" className="hover:text-teal-200 flex items-center gap-2" onClick={() => setIsOpen(false)}>
+              <ChevronDown size={18} /> Departments
+            </Link>
+            <Link href="/appointments" className="hover:text-teal-200 flex items-center gap-2" onClick={() => setIsOpen(false)}>
+              <Calendar size={18} /> Appointments
+            </Link>
+            <Link href="/contact" className="hover:text-teal-200 flex items-center gap-2" onClick={() => setIsOpen(false)}>
+              <Phone size={18} /> Contact
+            </Link>
+            <div className="flex flex-col gap-2 mt-2">
+              <Link
+                href="/auth"
+                className="bg-white text-teal-700 px-3 py-2 rounded-md text-center flex items-center justify-center gap-2"
+                onClick={() => setIsOpen(false)}
+              >
+                <LogIn size={18} /> Login
+              </Link>
+              <Link
+                href="/auth?mode=signup"
+                className="bg-yellow-400 text-black px-3 py-2 rounded-md text-center flex items-center justify-center gap-2"
+                onClick={() => setIsOpen(false)}
+              >
+                <UserPlus size={18} /> Sign Up
+              </Link>
+            </div>
+          </nav>
+        </div>
+      )}
+    </header>
   );
 }

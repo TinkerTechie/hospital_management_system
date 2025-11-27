@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -74,19 +74,58 @@ const IconLogout = () => (
 export default function NurseDashboardSidebar({ userName = "Nurse", profilePic, dark, toggleDark }) {
   const defaultProfilePic = "https://placehold.co/90x90/0D9488/FFFFFF?text=N";
   const pathname = usePathname();
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    // Fetch user from localStorage
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setCurrentUser(JSON.parse(storedUser));
+    }
+
+    // Listen for storage events (when profile is updated)
+    const handleStorageChange = () => {
+      const updatedUser = localStorage.getItem("user");
+      if (updatedUser) {
+        setCurrentUser(JSON.parse(updatedUser));
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
+  // Use currentUser data if available, otherwise fall back to props
+  const displayName = currentUser?.name || userName;
+  const displayPic = currentUser?.image || profilePic || defaultProfilePic;
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
+    window.location.href = "/auth";
+  };
 
   return (
     <div className="w-full md:w-64 lg:w-72 bg-slate-50 dark:bg-background border-r border-gray-200 dark:border-gray-800 p-6 flex flex-col h-full min-h-screen">
 
+      {/* Medicare Brand Logo */}
+      <Link href="/" className="flex items-center gap-2 mb-8 group">
+        <div className="w-10 h-10 bg-teal-600 rounded-lg flex items-center justify-center group-hover:bg-teal-700 transition-colors">
+          <span className="text-2xl">🏥</span>
+        </div>
+        <span className="text-xl font-bold text-gray-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+          Medicare
+        </span>
+      </Link>
+
       <div className="flex flex-col items-center mb-8">
-        <Image
-          src={profilePic || defaultProfilePic}
+        <img
+          src={displayPic}
           alt="Profile"
-          width={90}
-          height={90}
-          className="rounded-full border-4 border-teal-500 shadow-md"
+          className="w-[90px] h-[90px] rounded-full border-4 border-teal-500 shadow-md object-cover"
         />
-        <h2 className="mt-4 text-xl font-semibold text-gray-800 dark:text-white">{userName}</h2>
+        <h2 className="mt-4 text-xl font-semibold text-gray-800 dark:text-white">{displayName}</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">Nurse</p>
       </div>
 
@@ -108,7 +147,10 @@ export default function NurseDashboardSidebar({ userName = "Nurse", profilePic, 
         </button>
       )}
 
-      <button className="mt-auto text-left flex items-center gap-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 px-3 py-2 rounded-lg transition-colors">
+      <button
+        onClick={handleLogout}
+        className="mt-auto text-left flex items-center gap-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 px-3 py-2 rounded-lg transition-colors"
+      >
         <IconLogout /> Logout
       </button>
 

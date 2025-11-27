@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";   // ⬅️ ADDED
 
 export async function POST(req) {
   try {
-    const { name, email, password, role, dob } = await req.json();
+    const { name, email, password, role, licenseNumber } = await req.json();
 
     if (!name || !email || !password || !role) {
       return NextResponse.json(
@@ -14,7 +14,7 @@ export async function POST(req) {
       );
     }
 
-    const validRoles = ["PATIENT", "DOCTOR", "NURSE"];
+    const validRoles = ["PATIENT", "DOCTOR", "NURSE", "ADMIN"];
     if (!validRoles.includes(role.toUpperCase())) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
@@ -44,10 +44,7 @@ export async function POST(req) {
           data: {
             fullName: name,
             userId: user.id,
-            dob: new Date(dob),
-            gender: gender,
-            phone: phone,
-            licenseNumber: licenseNumber,
+            licenseNumber: licenseNumber || null,
           },
         });
         break;
@@ -57,6 +54,7 @@ export async function POST(req) {
           data: {
             fullName: name,
             userId: user.id,
+            licenseNumber: licenseNumber || null,
           },
         });
         break;
@@ -80,7 +78,9 @@ export async function POST(req) {
       { expiresIn: "7d" }
     );
 
-    fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/email/send`, {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+    fetch(`${appUrl}/api/email/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -90,15 +90,24 @@ export async function POST(req) {
       }),
     }).catch((err) => console.error("Error sending welcome email:", err));
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         success: true,
         message: "User registered successfully",
         user: userSafe,
-        token, // ⬅️ ADDED
+        token,
       },
       { status: 201 }
     );
+
+    response.cookies.set("token", token, {
+      httpOnly: true,
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60,
+      sameSite: "lax",
+    });
+
+    return response;
   } catch (err) {
     console.error("Signup error:", err);
     return NextResponse.json(

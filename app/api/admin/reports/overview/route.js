@@ -1,13 +1,24 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../../../../lib/auth";
+import { cookies } from "next/headers";
+import jwt from "jsonwebtoken";
 import { prisma } from "../../../../../lib/db";
 
 export async function GET(request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session) {
+        const cookieStore = cookies();
+        const token = cookieStore.get("token");
+
+        if (!token) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        try {
+            const decoded = jwt.verify(token.value, process.env.JWT_SECRET);
+            if (decoded.role !== "ADMIN") {
+                return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+            }
+        } catch (err) {
+            return NextResponse.json({ error: "Invalid token" }, { status: 401 });
         }
 
         // Fetch overview statistics

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../../lib/auth";
+
 import { prisma } from "../../../lib/db";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
@@ -10,40 +9,32 @@ export async function GET(req) {
         let userId = null;
         let user = null;
 
-        // First, try to get session from NextAuth (Google OAuth)
-        const session = await getServerSession(authOptions);
+        // Get JWT token from cookies
+        const cookieStore = cookies();
+        const token = cookieStore.get("token")?.value;
 
-        if (session && session.user) {
-            userId = session.user.id;
-            user = session.user;
-        } else {
-            // If no NextAuth session, try JWT token from cookies
-            const cookieStore = await cookies();
-            const token = cookieStore.get("token")?.value;
+        if (!token) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
 
-            if (!token) {
-                return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            userId = decoded.id;
+
+            // Fetch user from database
+            const dbUser = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { id: true, name: true, email: true, role: true, image: true }
+            });
+
+            if (!dbUser) {
+                return NextResponse.json({ error: "User not found" }, { status: 404 });
             }
 
-            try {
-                const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                userId = decoded.id;
-
-                // Fetch user from database
-                const dbUser = await prisma.user.findUnique({
-                    where: { id: userId },
-                    select: { id: true, name: true, email: true, role: true, image: true }
-                });
-
-                if (!dbUser) {
-                    return NextResponse.json({ error: "User not found" }, { status: 404 });
-                }
-
-                user = dbUser;
-            } catch (jwtError) {
-                console.error("JWT verification failed:", jwtError);
-                return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-            }
+            user = dbUser;
+        } catch (jwtError) {
+            console.error("JWT verification failed:", jwtError);
+            return NextResponse.json({ error: "Invalid token" }, { status: 401 });
         }
 
         if (!userId) {

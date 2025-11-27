@@ -1,9 +1,8 @@
-"use client";
-
 import Link from "next/link";
 import { useState } from "react";
 import { Menu, X, Bell, User, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import NotificationCenter from "./NotificationCenter";
 
 export default function DashboardNavbar({ user, handleLogout }) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -31,10 +30,7 @@ export default function DashboardNavbar({ user, handleLogout }) {
                     <div className="h-6 w-px bg-teal-500 mx-2"></div>
 
                     <div className="flex items-center gap-4">
-                        <button className="hover:text-teal-200 transition-colors relative">
-                            <Bell className="h-5 w-5" />
-                            <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full"></span>
-                        </button>
+                        <NotificationCenter />
 
                         <div className="flex items-center gap-2">
                             <span className="font-semibold">{user?.name?.split(' ')[0]}</span>

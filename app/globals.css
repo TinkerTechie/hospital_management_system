@@ -14,13 +14,24 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #111827;
+    --background: #1F2937;
     --foreground: #ededed;
   }
 }
 
 body {
-  background: var(--background);
+  background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+input,
+textarea,
+select {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  backdrop-filter: none !important;
+  /* Prevent blur effects on inputs themselves */
 }

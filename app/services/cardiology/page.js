@@ -177,6 +177,8 @@ export default function CardiologyPage() {
     const [conditions, setConditions] = useState([]);
     const [services, setServices] = useState([]);
     const [selectedService, setSelectedService] = useState(null);
+    const [testimonials, setTestimonials] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         // Fetch Conditions
@@ -190,6 +192,26 @@ export default function CardiologyPage() {
             .then(res => res.json())
             .then(data => setServices(data))
             .catch(err => console.error("Failed to fetch services", err));
+
+        // Fetch Real Reviews
+        fetch('/api/reviews/department/Cardiology')
+            .then(res => res.json())
+            .then(data => {
+                if (data.reviews && data.reviews.length > 0) {
+                    setTestimonials(data.reviews.map(review => ({
+                        name: review.reviewer?.name || 'Anonymous',
+                        role: review.department || 'Cardiology Patient',
+                        quote: review.comment || 'Excellent cardiac care!',
+                        image: `https://ui-avatars.com/api/?name=${encodeURIComponent(review.reviewer?.name || 'User')}&background=0D9488&color=fff`,
+                        rating: review.rating
+                    })));
+                }
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Failed to fetch reviews", err);
+                setLoading(false);
+            });
     }, []);
 
     return (
@@ -457,44 +479,44 @@ export default function CardiologyPage() {
             <section className="py-20 bg-white">
                 <div className="max-w-7xl mx-auto px-6">
                     <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">Patient Stories</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {[
-                            {
-                                name: "John D.",
-                                role: "Bypass Surgery",
-                                quote: "I was terrified when I found out I needed surgery. The team at Medicare made me feel safe and cared for every step of the way.",
-                                image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1974&auto=format&fit=crop"
-                            },
-                            {
-                                name: "Maria G.",
-                                role: "Arrhythmia Treatment",
-                                quote: "Dr. Miller is a lifesaver. After years of struggling with heart rhythm issues, I finally have my life back.",
-                                image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1976&auto=format&fit=crop"
-                            },
-                            {
-                                name: "Robert L.",
-                                role: "Emergency Care",
-                                quote: "The speed and efficiency of the emergency team saved my father's life during his heart attack. We are forever grateful.",
-                                image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1974&auto=format&fit=crop"
-                            }
-                        ].map((t, i) => (
-                            <div key={i} className="bg-gray-50 p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100">
-                                <div className="flex items-center gap-4 mb-6">
-                                    <img src={t.image} alt={t.name} className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm" />
-                                    <div>
-                                        <h4 className="font-bold text-gray-900">{t.name}</h4>
-                                        <p className="text-xs text-teal-600 font-medium uppercase">{t.role}</p>
+
+                    {loading ? (
+                        <div className="text-center py-12">
+                            <div className="animate-spin h-12 w-12 border-4 border-teal-600 border-t-transparent rounded-full mx-auto"></div>
+                        </div>
+                    ) : testimonials.length === 0 ? (
+                        <div className="bg-gray-50 p-12 rounded-2xl text-center max-w-2xl mx-auto">
+                            <p className="text-gray-600">No reviews yet. Be the first to share your cardiology experience!</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {testimonials.slice(0, 3).map((t, i) => (
+                                <div key={i} className="bg-gray-50 p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100">
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <img src={t.image} alt={t.name} className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm" />
+                                        <div>
+                                            <h4 className="font-bold text-gray-900">{t.name}</h4>
+                                            <p className="text-xs text-teal-600 font-medium uppercase">{t.role}</p>
+                                        </div>
                                     </div>
+                                    <div className="flex items-center gap-1 text-yellow-400 mb-4">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <Star
+                                                key={star}
+                                                className={`h-4 w-4 ${star <= (t.rating || 5)
+                                                        ? 'fill-current'
+                                                        : 'text-gray-300'
+                                                    }`}
+                                            />
+                                        ))}
+                                    </div>
+                                    <p className="text-gray-600 italic leading-relaxed">
+                                        "{t.quote}"
+                                    </p>
                                 </div>
-                                <div className="flex items-center gap-1 text-yellow-400 mb-4">
-                                    {[...Array(5)].map((_, j) => <Star key={j} className="h-4 w-4 fill-current" />)}
-                                </div>
-                                <p className="text-gray-600 italic leading-relaxed">
-                                    "{t.quote}"
-                                </p>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </section>
 

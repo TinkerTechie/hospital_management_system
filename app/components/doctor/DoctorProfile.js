@@ -29,7 +29,7 @@ export default function DoctorProfile() {
         text: "Please login as a doctor to view your profile.",
         icon: "info",
         confirmButtonText: "Go to Login",
-      }).then(() => router.push("/login"));
+      }).then(() => router.push("/auth"));
       return;
     }
     const user = JSON.parse(stored);

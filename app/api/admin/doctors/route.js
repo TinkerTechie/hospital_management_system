@@ -1,52 +1,23 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../../../lib/auth";
-import { prisma } from "../../../../lib/db";
-import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
+import jwt from "jsonwebtoken";
+import { prisma } from "../../../../lib/db";
 
 export async function GET(request) {
     try {
-        let userId = null;
-        let user = null;
+        const cookieStore = cookies();
+        const token = cookieStore.get("token");
 
-        // Try NextAuth session first
-        const session = await getServerSession(authOptions);
-
-        if (session && session.user) {
-            userId = session.user.id;
-            user = session.user;
-        } else {
-            // Fall back to JWT token
-            const cookieStore = await cookies();
-            const token = cookieStore.get("token")?.value;
-
-            if (!token) {
-                return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-            }
-
-            try {
-                const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                userId = decoded.id;
-
-                const dbUser = await prisma.user.findUnique({
-                    where: { id: userId },
-                    select: { id: true, name: true, email: true, role: true }
-                });
-
-                if (!dbUser) {
-                    return NextResponse.json({ error: "User not found" }, { status: 404 });
-                }
-
-                user = dbUser;
-            } catch (jwtError) {
-                console.error("JWT verification failed:", jwtError);
-                return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-            }
+        if (!token) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        if (!userId) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        let userId;
+        try {
+            const decoded = jwt.verify(token.value, process.env.JWT_SECRET);
+            userId = decoded.id;
+        } catch (err) {
+            return NextResponse.json({ error: "Invalid token" }, { status: 401 });
         }
 
         const { searchParams } = new URL(request.url);
@@ -118,49 +89,21 @@ export async function GET(request) {
 
 export async function POST(request) {
     try {
-        let userId = null;
-        let user = null;
+        const cookieStore = cookies();
+        const token = cookieStore.get("token");
 
-        // Try NextAuth session first
-        const session = await getServerSession(authOptions);
-
-        if (session && session.user) {
-            userId = session.user.id;
-            user = session.user;
-        } else {
-            // Fall back to JWT token
-            const cookieStore = await cookies();
-            const token = cookieStore.get("token")?.value;
-
-            if (!token) {
-                return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-            }
-
-            try {
-                const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                userId = decoded.id;
-
-                const dbUser = await prisma.user.findUnique({
-                    where: { id: userId },
-                    select: { id: true, name: true, email: true, role: true }
-                });
-
-                if (!dbUser) {
-                    return NextResponse.json({ error: "User not found" }, { status: 404 });
-                }
-
-                user = dbUser;
-            } catch (jwtError) {
-                console.error("JWT verification failed:", jwtError);
-                return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-            }
-        }
-
-        if (!userId) {
+        if (!token) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const userRole = user.role;
+        let userRole;
+        try {
+            const decoded = jwt.verify(token.value, process.env.JWT_SECRET);
+            userRole = decoded.role;
+        } catch (err) {
+            return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+        }
+
         if (userRole !== "ADMIN") {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }

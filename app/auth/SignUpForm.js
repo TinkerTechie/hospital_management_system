@@ -14,8 +14,13 @@ import {
 import { Input } from "./Input";
 import { Button } from "./Button";
 import Swal from "sweetalert2";
+import { useDispatch } from "react-redux";
+import { useRouter } from "next/navigation";
+import { login } from "../../src/redux/UserSlice";
 
 export function SignUpForm({ onSwitch }) {
+  const dispatch = useDispatch();
+  const router = useRouter();
   const [role, setRole] = useState("patient");
 
   // Base fields
@@ -24,7 +29,7 @@ export function SignUpForm({ onSwitch }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // Doctor/Nurse field
+  // Doctor/Nurse verification
   const [licenseNumber, setLicenseNumber] = useState("");
 
   const [errors, setErrors] = useState({});
@@ -50,9 +55,9 @@ export function SignUpForm({ onSwitch }) {
     if (password && confirmPassword && password !== confirmPassword)
       newErrors.confirmPassword = "Passwords do not match.";
 
-    // Only doctor/nurse
+    // License verification for doctors and nurses
     if ((role === "doctor" || role === "nurse") && !licenseNumber.trim())
-      newErrors.licenseNumber = "License Number is required.";
+      newErrors.licenseNumber = "License Number is required for verification.";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -104,6 +109,7 @@ export function SignUpForm({ onSwitch }) {
         role: role.toUpperCase(),
       };
 
+      // Add license number for doctors and nurses
       if (role === "doctor" || role === "nurse") {
         body.licenseNumber = licenseNumber;
       }
@@ -121,8 +127,30 @@ export function SignUpForm({ onSwitch }) {
         return;
       }
 
-      Swal.fire("Success!", "Account created successfully!", "success");
-      onSwitch();
+      Swal.fire({
+        title: "Success!",
+        text: "Account created successfully! Logging you in...",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false
+      });
+
+      // Auto-login logic
+      const user = data.user;
+      dispatch(login(user));
+      localStorage.setItem("user", JSON.stringify(user));
+
+      // Role-based redirect
+      if (user.role === "ADMIN") {
+        router.push("/dashboard/admin");
+      } else if (user.role === "DOCTOR") {
+        router.push("/dashboard/doctor");
+      } else if (user.role === "NURSE") {
+        router.push("/dashboard/nurse");
+      } else {
+        router.push("/dashboard/patient");
+      }
+
     } catch (err) {
       Swal.fire("Error", "Something went wrong!", "error");
     } finally {
@@ -134,26 +162,28 @@ export function SignUpForm({ onSwitch }) {
     <form onSubmit={handleSubmit} className="space-y-5">
 
       {/* ROLE TOGGLE */}
-      <div className="grid grid-cols-3 gap-2 bg-gray-100 p-2 rounded-lg">
+      <div className="grid grid-cols-4 gap-2 bg-gray-50 p-2 rounded-xl border border-gray-200">
         {[
-          { id: "patient", label: "Patient", icon: User },
-          { id: "doctor", label: "Doctor", icon: Briefcase },
-          { id: "nurse", label: "Nurse", icon: Stethoscope },
+          { id: "patient", label: "Patient", icon: User, activeClass: "bg-teal-600" },
+          { id: "doctor", label: "Doctor", icon: Briefcase, activeClass: "bg-blue-600" },
+          { id: "nurse", label: "Nurse", icon: Stethoscope, activeClass: "bg-purple-600" },
+          { id: "admin", label: "Admin", icon: FileSignature, activeClass: "bg-orange-600" },
         ].map((r) => {
           const Icon = r.icon;
+          const isActive = role === r.id;
 
           return (
             <button
               key={r.id}
               type="button"
               onClick={() => setRole(r.id)}
-              className={`flex items-center justify-center rounded-md px-3 py-2 ${
-                role === r.id
-                  ? "bg-white shadow text-green-700"
-                  : "text-gray-600 hover:bg-gray-200"
-              }`}
+              className={`flex flex-col items-center justify-center rounded-lg px-2 py-3 transition-all ${isActive
+                ? `${r.activeClass} shadow-lg text-white scale-105`
+                : "text-gray-600 hover:bg-gray-100"
+                }`}
             >
-              <Icon className="h-4 w-4 mr-2" /> {r.label}
+              <Icon className="h-5 w-5 mb-1" />
+              <span className="text-xs font-medium">{r.label}</span>
             </button>
           );
         })}
@@ -220,16 +250,16 @@ export function SignUpForm({ onSwitch }) {
         <p className="text-red-500 text-sm">⚠️ {errors.confirmPassword}</p>
       )}
 
-      {/* LICENSE NUMBER */}
+      {/* LICENSE NUMBER - For Doctors and Nurses */}
       {(role === "doctor" || role === "nurse") && (
         <>
           <label className="font-medium" htmlFor="licenseNumber">
-            License Number
+            Medical License Number *
           </label>
           <Input
             id="licenseNumber"
             icon={FileSignature}
-            placeholder="Enter your license number"
+            placeholder="Enter your medical license number"
             value={licenseNumber}
             onChange={(e) => setLicenseNumber(e.target.value)}
             onBlur={validate}
@@ -237,6 +267,9 @@ export function SignUpForm({ onSwitch }) {
           {errors.licenseNumber && (
             <p className="text-red-500 text-sm">⚠️ {errors.licenseNumber}</p>
           )}
+          <p className="text-xs text-gray-500 -mt-3">
+            Required to verify your medical credentials
+          </p>
         </>
       )}
 

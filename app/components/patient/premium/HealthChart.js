@@ -35,7 +35,7 @@ export default function HealthChart({ dark }) {
             lineCap: 'round'
         },
         xaxis: {
-            categories: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+            categories: ["Jan 15", "Jan 16", "Jan 17", "Jan 18", "Jan 19", "Jan 20", "Jan 21"], // 2025 Dates
             axisBorder: { show: false },
             axisTicks: { show: false },
             labels: {
@@ -80,14 +80,14 @@ export default function HealthChart({ dark }) {
                         <Activity className="h-5 w-5 text-teal-600 dark:text-teal-400" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Health Trends</h3>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Health Trends (2025)</h3>
                         <p className="text-xs text-gray-500 dark:text-gray-400">Weekly overview</p>
                     </div>
                 </div>
                 <select className="text-xs bg-gray-50 dark:bg-gray-700 border-none rounded-lg px-3 py-1.5 text-gray-600 dark:text-gray-300 font-medium focus:ring-2 focus:ring-sky-500/20 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                    <option>This Week</option>
-                    <option>Last Week</option>
-                    <option>Last Month</option>
+                    <option>Jan 2025</option>
+                    <option>Dec 2024</option>
+                    <option>Nov 2024</option>
                 </select>
             </div>
 

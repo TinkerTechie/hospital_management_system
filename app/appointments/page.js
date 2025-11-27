@@ -49,7 +49,7 @@ export default function AppointmentPage() {
         confirmButtonText: "Go to Login",
         confirmButtonColor: "#00796B",
       }).then(() => {
-        router.push("/login");
+        router.push("/auth");
       });
     } else {
       const userData = JSON.parse(storedUser);

@@ -1,13 +1,21 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../../../lib/auth";
+import { cookies } from "next/headers";
+import jwt from "jsonwebtoken";
 import { prisma } from "../../../../lib/db";
 
 export async function GET(request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session) {
+        const cookieStore = cookies();
+        const token = cookieStore.get("token");
+
+        if (!token) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        try {
+            jwt.verify(token.value, process.env.JWT_SECRET);
+        } catch (err) {
+            return NextResponse.json({ error: "Invalid token" }, { status: 401 });
         }
 
         const { searchParams } = new URL(request.url);
@@ -85,13 +93,22 @@ export async function GET(request) {
 
 export async function POST(request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session) {
+        const cookieStore = cookies();
+        const token = cookieStore.get("token");
+
+        if (!token) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const userRole = session.user.role;
-        if (!["admin", "doctor", "nurse"].includes(userRole)) {
+        let userRole;
+        try {
+            const decoded = jwt.verify(token.value, process.env.JWT_SECRET);
+            userRole = decoded.role;
+        } catch (err) {
+            return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+        }
+
+        if (!["ADMIN", "DOCTOR", "NURSE"].includes(userRole)) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 

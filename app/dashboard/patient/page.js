@@ -8,12 +8,13 @@ import {
   FileText,
   Lightbulb,
   AlertCircle,
-  ArrowRight
+  ArrowRight,
+  Star,
+  MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
-// Import Premium Components
 // Import Premium Components
 import DashboardNavbar from "../../components/patient/premium/DashboardNavbar";
 import DashboardFooter from "../../components/patient/premium/DashboardFooter";
@@ -23,6 +24,8 @@ import EmergencyButton from "../../components/patient/premium/EmergencyButton";
 import EmptyState from "../../components/patient/premium/EmptyState";
 import { AppointmentCard, PrescriptionCard, RecordRow } from "../../components/patient/premium/Cards";
 import QuickActions from "../../components/patient/premium/QuickActions";
+import PatientUpdatesFeed from "../../components/patient/premium/PatientUpdatesFeed";
+import ReviewModal from "../../components/patient/premium/ReviewModal";
 
 // Fallback image
 const profilePic = "https://placehold.co/120x120.png?text=P";
@@ -33,11 +36,10 @@ export default function PatientDashboard() {
   const [appointments, setAppointments] = useState([]);
   const [prescriptions, setPrescriptions] = useState([]);
   const [medicalRecords, setMedicalRecords] = useState([]);
+  const [patientUpdates, setPatientUpdates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showFullTip, setShowFullTip] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   useEffect(() => {
     // Role-based access control
@@ -57,7 +59,7 @@ export default function PatientDashboard() {
     async function fetchData() {
       try {
         const res = await fetch("/api/patient");
-        if (res.status === 401) {
+        if (res.status === 401 || res.status === 404) {
           window.location.href = "/auth";
           return;
         }
@@ -69,6 +71,13 @@ export default function PatientDashboard() {
         setAppointments(data.appointments || []);
         setPrescriptions(data.prescriptions || []);
         setMedicalRecords(data.medicalRecords || []);
+
+        // Fetch patient updates
+        const updatesRes = await fetch("/api/patient-updates?limit=5");
+        if (updatesRes.ok) {
+          const updatesData = await updatesRes.json();
+          setPatientUpdates(updatesData.updates || []);
+        }
       } catch (e) {
         console.error(e);
         setError(e.message);
@@ -139,9 +148,12 @@ export default function PatientDashboard() {
           <Link href="/dashboard/patient/records" className="flex items-center gap-2 bg-white text-gray-700 border border-gray-200 px-5 py-3 rounded-xl hover:bg-gray-50 font-medium shadow-sm transition-all hover:-translate-y-0.5">
             <FileText className="h-5 w-5 text-teal-600" /> View Records
           </Link>
-          <Link href="/dashboard/patient/prescriptions" className="flex items-center gap-2 bg-white text-gray-700 border border-gray-200 px-5 py-3 rounded-xl hover:bg-gray-50 font-medium shadow-sm transition-all hover:-translate-y-0.5">
-            <Pill className="h-5 w-5 text-emerald-600" /> Refill Prescription
-          </Link>
+          <button
+            onClick={() => setShowReviewModal(true)}
+            className="flex items-center gap-2 bg-white text-gray-700 border border-gray-200 px-5 py-3 rounded-xl hover:bg-gray-50 font-medium shadow-sm transition-all hover:-translate-y-0.5"
+          >
+            <Star className="h-5 w-5 text-yellow-500" /> Leave a Review
+          </button>
         </motion.div>
 
         <motion.div
@@ -257,33 +269,32 @@ export default function PatientDashboard() {
                 )}
               </motion.div>
 
-              {/* Subscribe Widget */}
-              <motion.div variants={itemVariants} className="bg-gradient-to-r from-teal-600 to-cyan-600 rounded-2xl p-6 text-white text-center shadow-lg">
-                <h3 className="text-lg font-semibold mb-2">Stay Updated</h3>
-                <p className="text-sm text-teal-100 mb-4">
-                  Get the latest health tips and hospital news.
-                </p>
-                <button className="bg-yellow-400 text-black px-4 py-2 rounded-md hover:bg-yellow-300 font-medium w-full text-sm">
-                  Subscribe Now
-                </button>
+              {/* Patient Updates */}
+              <motion.div variants={itemVariants} className="bg-white rounded-2xl shadow-md p-6 border border-teal-100">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5 text-blue-600" /> Recent Updates
+                  </h3>
+                  <Link href="/dashboard/patient/updates" className="text-sm font-medium text-teal-600 hover:text-teal-700 flex items-center gap-1">
+                    View All <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+
+                <PatientUpdatesFeed updates={patientUpdates.slice(0, 3)} />
               </motion.div>
 
             </div>
           </div>
 
-          {/* Recent Feedback (Moved to Bottom) */}
-          <motion.div variants={itemVariants} className="mt-10 bg-[#F0FDFA] p-8 rounded-xl shadow-md border border-teal-100 max-w-3xl mx-auto text-center">
-            <div className="flex flex-col items-center mb-4">
-              <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center text-teal-700 font-bold text-xl mb-3">
-                {user?.name?.charAt(0) || "U"}
-              </div>
-              <h4 className="font-semibold text-teal-800">Your Recent Feedback</h4>
-              <p className="text-yellow-500">★★★★★</p>
-            </div>
-            <p className="text-gray-700 leading-relaxed italic">
-              "Dr. Smith was excellent during my last visit. The facility is top-notch."
-            </p>
-          </motion.div>
+          {/* Review Modal */}
+          <ReviewModal
+            isOpen={showReviewModal}
+            onClose={() => setShowReviewModal(false)}
+            onSubmit={(review) => {
+              console.log("Review submitted:", review);
+              // Optionally refresh data or show success message
+            }}
+          />
 
         </motion.div>
       </main>

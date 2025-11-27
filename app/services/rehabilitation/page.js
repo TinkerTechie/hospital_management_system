@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
     Activity,
@@ -13,13 +13,39 @@ import {
     Phone,
     ArrowRight,
     CheckCircle,
-    Link as LinkIcon
+    Link as LinkIcon,
+    Star
 } from 'lucide-react';
 import Navbar from '../../components/shared/Navbar';
 import Footer from '../../components/shared/Footer';
 import Link from 'next/link';
 
 export default function RehabilitationPage() {
+    const [testimonials, setTestimonials] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchReviews() {
+            try {
+                const res = await fetch('/api/reviews/department/Rehabilitation');
+                if (res.ok) {
+                    const data = await res.json();
+                    setTestimonials(data.reviews.map(review => ({
+                        name: review.reviewer?.name || 'Anonymous',
+                        condition: review.department || 'Rehabilitation Patient',
+                        quote: review.comment || 'Great rehabilitation experience!',
+                        rating: review.rating
+                    })));
+                }
+            } catch (error) {
+                console.error('Error fetching reviews:', error);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchReviews();
+    }, []);
+
     const services = [
         {
             title: "Physiotherapy for Injury Recovery",
@@ -55,19 +81,6 @@ export default function RehabilitationPage() {
         { value: "95%", label: "Patient Satisfaction" },
         { value: "500+", label: "Successful Recoveries" },
         { value: "15+", label: "Expert Therapists" }
-    ];
-
-    const testimonials = [
-        {
-            name: "Rajesh Kumar",
-            condition: "Post-Knee Surgery",
-            quote: "The physiotherapy team helped me walk again after my knee replacement. I'm back to playing with my grandchildren!"
-        },
-        {
-            name: "Priya Sharma",
-            condition: "Stroke Recovery",
-            quote: "After my stroke, I couldn't move my right arm. Thanks to the dedicated therapists, I've regained 80% of my mobility."
-        }
     ];
 
     const approach = [
@@ -221,31 +234,54 @@ export default function RehabilitationPage() {
                         <p className="text-lg text-gray-600">Real recoveries from our patients</p>
                     </motion.div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-                        {testimonials.map((testimonial, index) => (
-                            <motion.div
-                                key={index}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: index * 0.2 }}
-                                className="bg-white p-8 rounded-2xl shadow-lg"
-                            >
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                                        <span className="text-green-600 font-bold text-xl">
-                                            {testimonial.name.charAt(0)}
-                                        </span>
+                    {loading ? (
+                        <div className="text-center py-12">
+                            <div className="animate-spin h-12 w-12 border-4 border-green-600 border-t-transparent rounded-full mx-auto"></div>
+                        </div>
+                    ) : testimonials.length === 0 ? (
+                        <div className="bg-white p-12 rounded-2xl shadow-lg text-center max-w-2xl mx-auto">
+                            <p className="text-gray-600">No reviews yet. Be the first to share your rehabilitation success story!</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                            {testimonials.map((testimonial, index) => (
+                                <motion.div
+                                    key={index}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: index * 0.2 }}
+                                    className="bg-white p-8 rounded-2xl shadow-lg"
+                                >
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                                            <span className="text-green-600 font-bold text-xl">
+                                                {testimonial.name.charAt(0)}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-gray-900">{testimonial.name}</h4>
+                                            <p className="text-sm text-gray-600">{testimonial.condition}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h4 className="font-bold text-gray-900">{testimonial.name}</h4>
-                                        <p className="text-sm text-gray-600">{testimonial.condition}</p>
-                                    </div>
-                                </div>
-                                <p className="text-gray-700 italic">"{testimonial.quote}"</p>
-                            </motion.div>
-                        ))}
-                    </div>
+                                    {testimonial.rating && (
+                                        <div className="flex items-center gap-1 mb-3">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                <Star
+                                                    key={star}
+                                                    className={`h-4 w-4 ${star <= testimonial.rating
+                                                            ? 'text-yellow-400 fill-yellow-400'
+                                                            : 'text-gray-300'
+                                                        }`}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                    <p className="text-gray-700 italic">"{testimonial.quote}"</p>
+                                </motion.div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </section>
 

@@ -2,15 +2,29 @@
 
 import React, { useState, useEffect } from "react";
 import NurseDashboardSidebar from "../../components/nurse/NurseDashboardSidebar";
+import NurseNavbar from "../../components/nurse/NurseNavbar";
+import PatientUpdateForm from "../../components/shared/PatientUpdateForm";
+import WelcomeCard from "../../components/nurse/premium/WelcomeCard";
+import PremiumStatCard from "../../components/nurse/premium/PremiumStatCard";
+import QuickActionCard from "../../components/nurse/premium/QuickActionCard";
+import PremiumSearchBar from "../../components/nurse/premium/PremiumSearchBar";
+import GlobalSearch from "../../components/GlobalSearch";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
   Clock,
   AlertCircle,
   Activity,
   Clipboard,
+  Thermometer,
+  Pill,
   FileText,
-  CheckSquare,
-  Search
+  Bell,
+  Settings,
+  LogOut,
+  Stethoscope,
+  Heart,
+  AlertTriangle
 } from "lucide-react";
 import Link from "next/link";
 
@@ -26,21 +40,17 @@ export default function NurseDashboardPage() {
   const [error, setError] = useState(null);
   const [showAlerts, setShowAlerts] = useState(false);
   const [dark, setDark] = useState(false);
-
-  // Mock alerts for now
-  const alerts = [
-    { id: 1, msg: "New patient added to triage", time: "5m ago" },
-    { id: 2, msg: "Medication update needed for Patient #3", time: "12m ago" },
-  ];
+  const [showUpdateForm, setShowUpdateForm] = useState(false);
+  const [alerts, setAlerts] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
-    // Theme check
     if (typeof window !== "undefined") {
       const theme = localStorage.getItem("theme");
       setDark(theme === "dark");
     }
 
-    // ✅ Role-based access control
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       const userData = JSON.parse(storedUser);
@@ -56,8 +66,8 @@ export default function NurseDashboardPage() {
     async function fetchData() {
       try {
         const res = await fetch("/api/nurse");
-        if (res.status === 401) {
-          window.location.href = "/auth"; // Redirect to custom login page
+        if (res.status === 401 || res.status === 404) {
+          window.location.href = "/auth";
           return;
         }
         if (!res.ok) throw new Error("Failed to fetch data");
@@ -68,6 +78,7 @@ export default function NurseDashboardPage() {
         setStats(data.stats);
         setTriageQueue(data.triageQueue || []);
         setAssignedPatients(data.assignedPatients || []);
+        setAlerts(data.alerts || []);
       } catch (e) {
         console.error(e);
         setError(e.message);
@@ -83,328 +94,336 @@ export default function NurseDashboardPage() {
     const next = !dark;
     setDark(next);
     localStorage.setItem("theme", next ? "dark" : "light");
+    document.documentElement.classList.toggle("dark", next);
   };
+
+  // Global search keyboard shortcut (Cmd+K / Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowSearch(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
+    window.location.href = "/auth";
+  };
+
+  if (loading) {
+    return (
+      <div className={dark ? "dark" : ""}>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-sky-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Loading dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={dark ? "dark" : ""}>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+          <div className="text-center">
+            <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+            <p className="text-gray-900 dark:text-white text-xl font-semibold mb-2">Error Loading Dashboard</p>
+            <p className="text-gray-600 dark:text-gray-400">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={dark ? "dark" : ""}>
-      <div className="  min-h-screen flex font-sans text-gray-900 transition-colors duration-300">
-        {/* LEFT SIDEBAR */}
-        <div className="hidden md:block">
+      {/* Navbar */}
+      <NurseNavbar
+        user={user}
+        handleLogout={handleLogout}
+        onSearchClick={() => setShowSearch(true)}
+      />
+
+      <div className="min-h-screen flex font-['Inter',sans-serif] bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+        {/* Sidebar */}
+        <div className="hidden lg:block sticky top-0 h-screen">
           <NurseDashboardSidebar
             userName={user?.name || "Nurse"}
             profilePic={user?.image || profilePic}
+            dark={dark}
+            toggleDark={toggleDark}
           />
         </div>
 
-        {/* MAIN */}
-        <main className="flex-1 p-6 md:p-10 max-w-7xl mx-auto overflow-y-auto">
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto">
+          {/* Top Bar */}
+          <div className="sticky top-0 z-40 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-700">
+            <div className="px-6 lg:px-10 py-4">
+              <div className="flex items-center justify-between gap-4">
+                {/* Spacer to push Right Actions to the right if search is removed */}
+                <div className="flex-1"></div>
 
-          {/* Header + Alerts */}
-          <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
-            <div>
-              <h1 className="font-bold text-3xl text-gray-900 dark:text-white">
-                Welcome, {user?.name?.split(" ")[0] || "Nurse"} 👩‍⚕️
-              </h1>
-              <p className="text-gray-500 dark:text-gray-400 mt-1">
-                Shift: <span className="font-medium text-teal-600 dark:text-teal-400">{nurseProfile?.shiftTiming || "08:00 AM - 04:00 PM"}</span> • Ward: <span className="font-medium text-teal-600 dark:text-teal-400">{nurseProfile?.assignedWard || "General"}</span>
-              </p>
+                {/* Right Actions */}
+                <div className="flex items-center gap-3">
+                  {/* Theme Toggle */}
+                  <button
+                    onClick={toggleDark}
+                    className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    {dark ? "☀️" : "🌙"}
+                  </button>
 
-              {!loading && !error && !nurseProfile && (
-                <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 text-sm rounded-lg border border-amber-100 dark:border-amber-800 flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4" />
-                  <span>Your profile is incomplete. Please update your details in Settings.</span>
-                </div>
-              )}
-            </div>
+                  {/* Notifications */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowAlerts(!showAlerts)}
+                      className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors relative"
+                    >
+                      <Bell className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+                      {alerts.length > 0 && (
+                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                      )}
+                    </button>
 
-            {/* Alerts Notification */}
-            <div className="flex items-center gap-4 self-end md:self-auto">
-              <button
-                onClick={toggleDark}
-                className="p-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:shadow-md transition-all"
-              >
-                {dark ? "☀" : "🌙"}
-              </button>
-
-              <div className="relative">
-                <button
-                  onClick={() => setShowAlerts(!showAlerts)}
-                  className="relative px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-xl hover: dark:hover:bg-gray-700 transition-all shadow-sm flex items-center gap-2"
-                >
-                  <AlertCircle className="h-5 w-5 text-teal-600 dark:text-teal-400" />
-                  <span className="font-medium">Alerts</span>
-                  <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{alerts.length}</span>
-                </button>
-
-                {showAlerts && (
-                  <div className="absolute right-0 mt-3 w-80 bg-white dark:bg-gray-800 p-0 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden">
-                    <div className="p-4 border-b border-gray-50 dark:border-gray-700  dark:bg-gray-700">
-                      <h3 className="font-semibold text-gray-800 dark:text-white">Recent Alerts</h3>
-                    </div>
-                    <div className="max-h-64 overflow-y-auto">
-                      {alerts.map((a) => (
-                        <div
-                          key={a.id}
-                          className="p-4 border-b border-gray-50 dark:border-gray-700 hover: dark:hover:bg-gray-700 transition-colors"
+                    <AnimatePresence>
+                      {showAlerts && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 10 }}
+                          className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
                         >
-                          <p className="text-sm text-gray-800 dark:text-gray-200 font-medium">{a.msg}</p>
-                          <p className="text-xs text-gray-400 mt-1">{a.time}</p>
-                        </div>
-                      ))}
-                    </div>
+                          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                            <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
+                          </div>
+                          <div className="max-h-96 overflow-y-auto">
+                            {alerts.length === 0 ? (
+                              <p className="p-6 text-center text-gray-500 dark:text-gray-400 text-sm">
+                                No new notifications
+                              </p>
+                            ) : (
+                              alerts.map((alert, i) => (
+                                <div key={i} className="p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                  <p className="text-sm text-gray-900 dark:text-white font-medium">{alert.msg}</p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{alert.time}</p>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-                )}
+
+                  {/* Settings */}
+                  <Link
+                    href="/dashboard/nurse/profile"
+                    className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    <Settings className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+                  </Link>
+                </div>
               </div>
             </div>
-          </header>
+          </div>
 
-          {loading ? (
-            <LoadingScreen />
-          ) : error ? (
-            <ErrorScreen msg={error} />
-          ) : (
-            <>
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                <StatCard
-                  icon={<Users className="text-teal-600 dark:text-teal-400" />}
-                  label="Patients Today"
-                  value={stats?.patientsToday || 0}
-                  color="bg-teal-50 dark:bg-teal-900/20"
+          {/* Page Content */}
+          <div className="px-6 lg:px-10 py-8 space-y-8">
+            {/* Welcome Card */}
+            <WelcomeCard
+              userName={user?.name?.split(" ")[0] || "Nurse"}
+              currentShift={nurseProfile?.currentShift || "Day Shift"}
+              shiftEnd="6:00 PM"
+            />
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <PremiumStatCard
+                icon={Users}
+                label="Patients Today"
+                value={stats?.assignedPatients || 0}
+                subtitle="assigned"
+                trend={5}
+                trendValue="vs yesterday"
+                color="blue"
+                delay={0}
+              />
+              <PremiumStatCard
+                icon={Clipboard}
+                label="Pending Triage"
+                value={stats?.pendingTriage || 0}
+                subtitle="waiting"
+                color="amber"
+                delay={0.1}
+              />
+              <PremiumStatCard
+                icon={Activity}
+                label="Active Cases"
+                value={stats?.activeCases || 0}
+                subtitle="in progress"
+                trend={-2}
+                trendValue="vs yesterday"
+                color="teal"
+                delay={0.2}
+              />
+              <PremiumStatCard
+                icon={Clock}
+                label="Shift Progress"
+                value={`${stats?.shiftProgress || 45}%`}
+                subtitle="completed"
+                color="blue"
+                delay={0.3}
+              />
+            </div>
+
+            {/* Quick Actions */}
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Quick Actions</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <QuickActionCard
+                  icon={Stethoscope}
+                  label="Update Vitals"
+                  description="Record patient vitals"
+                  onClick={() => window.location.href = "/dashboard/nurse/patients"}
+                  color="blue"
+                  delay={0}
                 />
-                <StatCard
-                  icon={<Clipboard className="text-orange-600 dark:text-orange-400" />}
-                  label="Pending Triage"
-                  value={stats?.pendingTriage || 0}
-                  color="bg-orange-50 dark:bg-orange-900/20"
+                <QuickActionCard
+                  icon={Pill}
+                  label="Medications"
+                  description="View medication guide"
+                  onClick={() => window.location.href = "/dashboard/nurse/resources/med-guide"}
+                  color="teal"
+                  delay={0.1}
                 />
-                <StatCard
-                  icon={<Activity className="text-blue-600 dark:text-blue-400" />}
-                  label="Active Cases"
-                  value={stats?.activeCases || 0}
-                  color="bg-blue-50 dark:bg-blue-900/20"
+                <QuickActionCard
+                  icon={FileText}
+                  label="Protocols"
+                  description="Access care protocols"
+                  onClick={() => window.location.href = "/dashboard/nurse/resources"}
+                  color="purple"
+                  delay={0.2}
+                />
+                <QuickActionCard
+                  icon={AlertTriangle}
+                  label="Emergency"
+                  description="Report urgent situation"
+                  onClick={() => alert("Emergency protocol activated")}
+                  color="red"
+                  delay={0.3}
                 />
               </div>
+            </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-                {/* Left Column: Triage & Assigned */}
-                <div className="lg:col-span-2 space-y-8">
-
-                  {/* TRIAGE QUEUE */}
-                  <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-                    <div className="flex justify-between items-center mb-6">
-                      <h2 className="text-lg font-bold text-gray-800 dark:text-white">Triage Queue</h2>
-                      <span className="text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-1 rounded-lg">
-                        {triageQueue.length} Waiting
-                      </span>
-                    </div>
-
-                    {triageQueue.length === 0 ? (
-                      <EmptyState
-                        icon={<CheckSquare className="h-10 w-10 text-gray-300 dark:text-gray-600" />}
-                        title="All clear!"
-                        desc="No patients waiting for triage."
-                      />
-                    ) : (
-                      <div className="space-y-3">
-                        {triageQueue.map((patient) => (
-                          <TriageCard
-                            key={patient.id}
-                            name={patient.name}
-                            condition={patient.condition}
-                            priority={patient.priority}
-                            waiting={patient.waiting}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Assigned Patients */}
-                  <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-                    <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-6">
-                      Assigned Patients
-                    </h2>
-
-                    {assignedPatients.length === 0 ? (
-                      <p className="text-sm text-gray-500 dark:text-gray-400">No patients assigned currently.</p>
-                    ) : (
-                      <div className="grid md:grid-cols-2 gap-4">
-                        {assignedPatients.map((patient) => (
-                          <AssignedCard
-                            key={patient.id}
-                            name={patient.name}
-                            age={patient.age}
-                            issue={patient.issue}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
+            {/* Patient Queue & Assigned Patients */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Triage Queue */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
+              >
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Triage Queue</h2>
+                  <Link
+                    href="/dashboard/nurse/triage"
+                    className="text-sm font-semibold text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300"
+                  >
+                    View All →
+                  </Link>
                 </div>
 
-                {/* Right Column: Quick Links & Profile */}
-                <div className="space-y-8">
-
-                  {/* Profile Summary */}
-                  <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 text-center">
-                    <div className="relative inline-block">
-                      <img
-                        src={user?.image || profilePic}
-                        alt="Profile"
-                        className="w-24 h-24 rounded-full border-4 border-teal-50 dark:border-teal-900 object-cover mx-auto mb-4"
-                      />
-                      <div className="absolute bottom-2 right-2 h-5 w-5 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></div>
-                    </div>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">{user?.name || "Nurse"}</h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Emergency Department</p>
-
-                    <div className="flex justify-center gap-2">
-                      <Link href="/dashboard/nurse/profile" className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-xl hover:bg-teal-700 transition-colors">
-                        Edit Profile
-                      </Link>
-                      <Link href="/dashboard/nurse/schedule" className="px-4 py-2  dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors border border-gray-200 dark:border-gray-600">
-                        View Schedule
-                      </Link>
-                    </div>
-                  </div>
-
-                  {/* Quick Links */}
-                  <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-                    <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4">
-                      Quick Tools
-                    </h2>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <QuickLink label="Vitals Entry" icon={<Activity className="h-5 w-5" />} />
-                      <QuickLink label="Med Guide" icon={<Clipboard className="h-5 w-5" />} />
-                      <QuickLink label="Protocols" icon={<FileText className="h-5 w-5" />} />
-                      <QuickLink label="Emergency" icon={<AlertCircle className="h-5 w-5" />} color="text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 border-red-100 dark:border-red-900/30" />
-                    </div>
-                  </div>
-
+                <div className="space-y-3">
+                  {triageQueue.length === 0 ? (
+                    <p className="text-center py-8 text-gray-500 dark:text-gray-400">No patients in triage</p>
+                  ) : (
+                    triageQueue.slice(0, 5).map((patient, i) => (
+                      <div key={i} className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-semibold text-gray-900 dark:text-white">{patient.name}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">{patient.condition}</p>
+                          </div>
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${patient.priority === "High" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
+                            patient.priority === "Medium" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
+                              "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            }`}>
+                            {patient.priority}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
-              </div>
-            </>
-          )}
+              </motion.div>
 
+              {/* Assigned Patients */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
+              >
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Assigned Patients</h2>
+                  <Link
+                    href="/dashboard/nurse/patients"
+                    className="text-sm font-semibold text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300"
+                  >
+                    View All →
+                  </Link>
+                </div>
+
+                <div className="space-y-3">
+                  {assignedPatients.length === 0 ? (
+                    <p className="text-center py-8 text-gray-500 dark:text-gray-400">No assigned patients</p>
+                  ) : (
+                    assignedPatients.slice(0, 5).map((patient, i) => (
+                      <div key={i} className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-semibold text-gray-900 dark:text-white">{patient.name}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Room {patient.room} • Bed {patient.bed}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Heart className={`h-4 w-4 ${patient.status === "stable" ? "text-green-500" : "text-amber-500"}`} />
+                            <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">{patient.status}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </motion.div>
+            </div>
+          </div>
         </main>
       </div>
+
+      {/* Global Search Modal */}
+      <GlobalSearch isOpen={showSearch} onClose={() => setShowSearch(false)} />
+
+      {/* Patient Update Form Modal */}
+      {showUpdateForm && (
+        <PatientUpdateForm
+          isOpen={showUpdateForm}
+          onClose={() => setShowUpdateForm(false)}
+          onSuccess={() => {
+            setShowUpdateForm(false);
+            // Refresh data
+          }}
+        />
+      )}
     </div>
   );
 }
-
-/* ------------------------------
-   SUBCOMPONENTS
------------------------------- */
-
-function StatCard({ icon, label, value, color }) {
-  return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow flex items-center gap-4">
-      <div className={`p-3 rounded-xl ${color}`}>
-        {icon}
-      </div>
-      <div>
-        <h4 className="text-2xl font-bold text-gray-900 dark:text-white">{value}</h4>
-        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{label}</p>
-      </div>
-    </div>
-  );
-}
-
-function TriageCard({ name, condition, priority, waiting }) {
-  const colors = {
-    high: "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-100 dark:border-red-900/30",
-    medium: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-100 dark:border-amber-900/30",
-    low: "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-100 dark:border-green-900/30",
-  };
-
-  return (
-    <div className="p-4 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl hover:shadow-sm transition-shadow flex justify-between items-center group">
-      <div className="flex items-center gap-4">
-        <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-sm ${colors[priority]}`}>
-          {name.charAt(0)}
-        </div>
-        <div>
-          <p className="font-semibold text-gray-800 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">{name}</p>
-          <p className="text-gray-500 dark:text-gray-400 text-xs">{condition} • Waited {waiting}</p>
-        </div>
-      </div>
-
-      <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${colors[priority]}`}>
-        {priority}
-      </span>
-    </div>
-  );
-}
-
-function AssignedCard({ name, age, issue }) {
-  return (
-    <div className="p-5 border border-gray-100 dark:border-gray-700 rounded-xl  dark:bg-gray-700/30 hover:bg-white dark:hover:bg-gray-700 hover:shadow-md transition-all group">
-      <div className="flex justify-between items-start mb-3">
-        <h3 className="font-semibold text-gray-800 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">{name}</h3>
-        <span className="text-xs text-gray-400 dark:text-gray-500 bg-white dark:bg-gray-800 px-2 py-1 rounded-lg border border-gray-100 dark:border-gray-600">{age} yrs</span>
-      </div>
-      <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">{issue}</p>
-
-      <button className="w-full py-2 bg-white dark:bg-gray-800 text-teal-600 dark:text-teal-400 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-600 hover:border-teal-500 dark:hover:border-teal-500 hover:text-teal-700 dark:hover:text-teal-300 transition-all">
-        Update Status
-      </button>
-    </div>
-  );
-}
-
-function QuickLink({ label, icon, color = "text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-900/20 hover:bg-teal-100 dark:hover:bg-teal-900/30 border-teal-100 dark:border-teal-900/30" }) {
-  return (
-    <button className={`p-4 border rounded-xl font-medium transition-all flex flex-col items-center justify-center gap-2 ${color}`}>
-      {icon}
-      <span className="text-xs">{label}</span>
-    </button>
-  );
-}
-
-function EmptyState({ icon, title, desc }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-8 text-center">
-      <div className="mb-3 p-3  dark:bg-gray-700 rounded-full">
-        {icon}
-      </div>
-      <h4 className="text-gray-900 dark:text-white font-medium mb-1">{title}</h4>
-      <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">{desc}</p>
-    </div>
-  );
-}
-
-function LoadingScreen() {
-  return (
-    <div className="h-96 flex items-center justify-center">
-      <div className="flex flex-col items-center">
-        <div className="w-12 h-12 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin mb-4"></div>
-        <p className="text-gray-500 font-medium">Loading dashboard...</p>
-      </div>
-    </div>
-  );
-}
-
-function ErrorScreen({ msg }) {
-  return (
-    <div className="h-96 flex items-center justify-center">
-      <div className="text-center max-w-md p-6">
-        <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-          <AlertCircle className="h-8 w-8" />
-        </div>
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Something went wrong</h2>
-        <p className="text-gray-500 mb-6">{msg}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition"
-        >
-          Try Again
-        </button>
-      </div>
-    </div>
-  );
-}
-

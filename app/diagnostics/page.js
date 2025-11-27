@@ -453,6 +453,8 @@ export default function DiagnosticsPage() {
     const [selectedService, setSelectedService] = useState(null);
     const [currentFacility, setCurrentFacility] = useState(0);
     const [currentTestimonial, setCurrentTestimonial] = useState(0);
+    const [testimonials, setTestimonials] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         // Fetch Services
@@ -490,39 +492,28 @@ export default function DiagnosticsPage() {
                 else setFacilities([]);
             })
             .catch(err => console.error("Failed to fetch facilities", err));
+
+        // Fetch Real Reviews
+        fetch('/api/reviews/department/Diagnostics')
+            .then(res => res.json())
+            .then(data => {
+                if (data.reviews && data.reviews.length > 0) {
+                    setTestimonials(data.reviews.map(review => ({
+                        name: review.reviewer?.name || 'Anonymous',
+                        role: 'Patient',
+                        test: review.department || 'Diagnostics',
+                        quote: review.comment || 'Great diagnostic experience!',
+                        image: `https://ui-avatars.com/api/?name=${encodeURIComponent(review.reviewer?.name || 'User')}&background=0D9488&color=fff`,
+                        rating: review.rating
+                    })));
+                }
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Failed to fetch reviews", err);
+                setLoading(false);
+            });
     }, []);
-
-    const nextFacility = () => {
-        setCurrentFacility((prev) => (prev + 1) % facilities.length);
-    };
-
-    const prevFacility = () => {
-        setCurrentFacility((prev) => (prev - 1 + facilities.length) % facilities.length);
-    };
-
-    const testimonials = [
-        {
-            name: "Priya Sharma",
-            role: "Patient",
-            test: "Executive Health Checkup",
-            quote: "The entire process was seamless. From booking online to the home sample collection, everything was professional. I got my reports the same evening via email.",
-            image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80"
-        },
-        {
-            name: "Rajesh Kumar",
-            role: "Patient",
-            test: "Diabetes Screening",
-            quote: "I was worried about my tests, but the staff at Medicare made me feel very comfortable. The phlebotomist was skilled and painless. Highly recommended!",
-            image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80"
-        },
-        {
-            name: "Anita Desai",
-            role: "Patient",
-            test: "MRI Scan",
-            quote: "State-of-the-art facility indeed. The MRI suite was clean and modern. The radiologist took the time to explain the procedure, which really helped my anxiety.",
-            image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=200&q=80"
-        }
-    ];
 
     return (
         <div className="min-h-screen bg-white font-sans">
@@ -828,41 +819,57 @@ export default function DiagnosticsPage() {
                         <h2 className="text-4xl font-bold text-gray-900 mb-4">Patient Stories</h2>
                     </div>
 
-                    <div className="relative bg-teal-50 rounded-3xl p-8 md:p-12">
-                        <div className="flex flex-col md:flex-row gap-8 items-center">
-                            <div className="w-24 h-24 md:w-32 md:h-32 flex-shrink-0 rounded-full overflow-hidden border-4 border-white shadow-lg">
-                                <img
-                                    src={testimonials[currentTestimonial].image}
-                                    alt={testimonials[currentTestimonial].name}
-                                    className="w-full h-full object-cover"
-                                />
-                            </div>
-                            <div className="flex-grow text-center md:text-left">
-                                <div className="flex justify-center md:justify-start gap-1 mb-4">
-                                    {[...Array(5)].map((_, i) => (
-                                        <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                                    ))}
-                                </div>
-                                <p className="text-xl md:text-2xl text-gray-800 italic mb-6 font-light leading-relaxed">
-                                    "{testimonials[currentTestimonial].quote}"
-                                </p>
-                                <div>
-                                    <h4 className="font-bold text-gray-900 text-lg">{testimonials[currentTestimonial].name}</h4>
-                                    <p className="text-teal-600 text-sm">{testimonials[currentTestimonial].test}</p>
-                                </div>
-                            </div>
+                    {loading ? (
+                        <div className="text-center py-12">
+                            <div className="animate-spin h-12 w-12 border-4 border-teal-600 border-t-transparent rounded-full mx-auto"></div>
                         </div>
+                    ) : testimonials.length === 0 ? (
+                        <div className="bg-teal-50 rounded-3xl p-12 text-center">
+                            <p className="text-gray-600">No reviews yet. Be the first to share your diagnostic experience!</p>
+                        </div>
+                    ) : (
+                        <div className="relative bg-teal-50 rounded-3xl p-8 md:p-12">
+                            <div className="flex flex-col md:flex-row gap-8 items-center">
+                                <div className="w-24 h-24 md:w-32 md:h-32 flex-shrink-0 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                                    <img
+                                        src={testimonials[currentTestimonial].image}
+                                        alt={testimonials[currentTestimonial].name}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <div className="flex-grow text-center md:text-left">
+                                    <div className="flex justify-center md:justify-start gap-1 mb-4">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <Star
+                                                key={star}
+                                                className={`h-5 w-5 ${star <= (testimonials[currentTestimonial].rating || 5)
+                                                        ? 'fill-yellow-400 text-yellow-400'
+                                                        : 'text-gray-300'
+                                                    }`}
+                                            />
+                                        ))}
+                                    </div>
+                                    <p className="text-xl md:text-2xl text-gray-800 italic mb-6 font-light leading-relaxed">
+                                        "{testimonials[currentTestimonial].quote}"
+                                    </p>
+                                    <div>
+                                        <h4 className="font-bold text-gray-900 text-lg">{testimonials[currentTestimonial].name}</h4>
+                                        <p className="text-teal-600 text-sm">{testimonials[currentTestimonial].test}</p>
+                                    </div>
+                                </div>
+                            </div>
 
-                        <div className="flex justify-center gap-3 mt-8">
-                            {testimonials.map((_, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => setCurrentTestimonial(i)}
-                                    className={`w-3 h-3 rounded-full transition-all ${i === currentTestimonial ? 'bg-teal-600 w-8' : 'bg-gray-300 hover:bg-gray-400'}`}
-                                />
-                            ))}
+                            <div className="flex justify-center gap-3 mt-8">
+                                {testimonials.map((_, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => setCurrentTestimonial(i)}
+                                        className={`w-3 h-3 rounded-full transition-all ${i === currentTestimonial ? 'bg-teal-600 w-8' : 'bg-gray-300 hover:bg-gray-400'}`}
+                                    />
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </section>
 
