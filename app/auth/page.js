@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { Stethoscope } from 'lucide-react';
 import LoginForm from './LoginForm';
 import { SignUpForm } from './SignUpForm';
-
 import { useSearchParams } from 'next/navigation';
 
-export default function AuthPage() {
+// Separate component that uses useSearchParams
+function AuthContent() {
   const searchParams = useSearchParams();
   const mode = searchParams.get('mode');
   const [isLogin, setIsLogin] = useState(mode !== 'signup');
@@ -62,5 +62,28 @@ export default function AuthPage() {
         </div>
       </main>
     </>
+  );
+}
+
+// Main page component with Suspense boundary
+export default function AuthPage() {
+  return (
+    <Suspense fallback={
+      <main className="flex min-h-screen w-full items-center justify-center p-4 font-sans">
+        <div className="w-full max-w-md">
+          <div className="mb-8 flex flex-col items-center">
+            <div className="rounded-full bg-teal-100 p-4 shadow-md animate-pulse">
+              <Stethoscope className="h-10 w-10 text-teal-700" />
+            </div>
+            <h1 className="mt-4 text-3xl font-extrabold text-gray-800 tracking-wide">
+              HospitalNext
+            </h1>
+            <p className="mt-1 text-gray-600 text-center">Loading...</p>
+          </div>
+        </div>
+      </main>
+    }>
+      <AuthContent />
+    </Suspense>
   );
 }

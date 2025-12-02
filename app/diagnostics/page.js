@@ -515,6 +515,14 @@ export default function DiagnosticsPage() {
             });
     }, []);
 
+    const prevFacility = () => {
+        setCurrentFacility((prev) => (prev === 0 ? facilities.length - 1 : prev - 1));
+    };
+
+    const nextFacility = () => {
+        setCurrentFacility((prev) => (prev === facilities.length - 1 ? 0 : prev + 1));
+    };
+
     return (
         <div className="min-h-screen bg-white font-sans">
             <Navbar />
@@ -843,8 +851,8 @@ export default function DiagnosticsPage() {
                                             <Star
                                                 key={star}
                                                 className={`h-5 w-5 ${star <= (testimonials[currentTestimonial].rating || 5)
-                                                        ? 'fill-yellow-400 text-yellow-400'
-                                                        : 'text-gray-300'
+                                                    ? 'fill-yellow-400 text-yellow-400'
+                                                    : 'text-gray-300'
                                                     }`}
                                             />
                                         ))}

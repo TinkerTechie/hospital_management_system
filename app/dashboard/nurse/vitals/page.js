@@ -6,6 +6,7 @@ import { Activity, Heart, Thermometer, Droplet, Save, CheckCircle } from "lucide
 
 export default function VitalsEntryPage() {
     const [user, setUser] = useState(null);
+    const [success, setSuccess] = useState(false);
 
     React.useEffect(() => {
         const storedUser = localStorage.getItem("user");
