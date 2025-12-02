@@ -56,16 +56,42 @@ export default function PatientsListPage() {
             });
 
             const res = await fetch(`/api/admin/patients?${params}`);
-            if (!res.ok) throw new Error("Failed to fetch patients");
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`Failed to fetch patients: ${res.status} ${res.statusText} - ${errorText}`);
+            }
 
             const data = await res.json();
             setPatients(data.patients || []);
         } catch (error) {
             console.error("Error fetching patients:", error);
+            // Optional: Show toast or alert
+            // Swal.fire("Error", error.message, "error");
             setPatients([]);
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleExport = () => {
+        const headers = ["ID", "Name", "Email", "Phone", "Blood Group", "Status"];
+        const csvContent = [
+            headers.join(","),
+            ...patients.map(p => [
+                p.id,
+                `"${p.name}"`,
+                p.email || "",
+                p.phone || "",
+                p.bloodGroup || "",
+                p.status || ""
+            ].join(","))
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "patients_export.csv";
+        link.click();
     };
 
     const handleDelete = async (id) => {
@@ -221,7 +247,10 @@ export default function PatientsListPage() {
                             </p>
                         </div>
                         <div className="flex gap-3">
-                            <button className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-2">
+                            <button
+                                onClick={handleExport}
+                                className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+                            >
                                 <Download className="h-4 w-4" />
                                 Export
                             </button>

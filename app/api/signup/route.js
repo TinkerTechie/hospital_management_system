@@ -54,7 +54,6 @@ export async function POST(req) {
           data: {
             fullName: name,
             userId: user.id,
-            licenseNumber: licenseNumber || null,
           },
         });
         break;

@@ -28,22 +28,89 @@ export default function NursePatientsPage() {
         rr: ""
     });
     const [saving, setSaving] = useState(false);
+    const [patients, setPatients] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (typeof window !== "undefined") {
             const theme = localStorage.getItem("theme");
             setDark(theme === "dark");
         }
+        fetchPatients();
     }, []);
 
-    // Mock Data
-    const patients = [
-        { id: 1, name: "Sarah Johnson", bed: "101-A", condition: "Stable", vitals: { hr: 72, bp: "120/80", temp: "98.6", o2: 98, rr: 16 }, diagnosis: "Post-op Recovery", lastUpdated: "2 hours ago" },
-        { id: 2, name: "Michael Chen", bed: "102-B", condition: "Critical", vitals: { hr: 110, bp: "140/95", temp: "101.2", o2: 92, rr: 22 }, diagnosis: "Severe Pneumonia", lastUpdated: "30 mins ago" },
-        { id: 3, name: "Emma Wilson", bed: "103-A", condition: "Stable", vitals: { hr: 68, bp: "118/75", temp: "98.4", o2: 99, rr: 14 }, diagnosis: "Observation", lastUpdated: "1 hour ago" },
-        { id: 4, name: "James Brown", bed: "104-C", condition: "Improving", vitals: { hr: 85, bp: "130/85", temp: "99.1", o2: 96, rr: 18 }, diagnosis: "Infection", lastUpdated: "45 mins ago" },
-        { id: 5, name: "Lisa Anderson", bed: "105-A", condition: "Stable", vitals: { hr: 75, bp: "122/78", temp: "98.7", o2: 97, rr: 15 }, diagnosis: "Diabetes Management", lastUpdated: "3 hours ago" },
-    ];
+    const fetchPatients = async () => {
+        try {
+            setLoading(true);
+            const res = await fetch("/api/admin/patients?limit=100");
+            if (!res.ok) throw new Error("Failed to fetch patients");
+
+            const data = await res.json();
+            const patientsData = data.patients || [];
+
+            // Fetch latest vitals for each patient
+            const patientsWithVitals = await Promise.all(
+                patientsData.map(async (patient) => {
+                    try {
+                        const vitalsRes = await fetch(`/api/nurse/patients/${patient.id}/vitals`);
+                        if (vitalsRes.ok) {
+                            const vitalsData = await vitalsRes.json();
+                            const latestVitals = vitalsData.vitals?.[0];
+
+                            return {
+                                id: patient.id,
+                                name: patient.fullName,
+                                bed: patient.assignedWard || "N/A",
+                                condition: "Stable", // Could be derived from vitals
+                                vitals: latestVitals ? {
+                                    hr: latestVitals.heartRate || 0,
+                                    bp: `${latestVitals.bpSystolic || 0}/${latestVitals.bpDiastolic || 0}`,
+                                    temp: latestVitals.temperature?.toFixed(1) || "0.0",
+                                    o2: latestVitals.oxygenSaturation || 0,
+                                    rr: latestVitals.respiratoryRate || 0
+                                } : {
+                                    hr: 0,
+                                    bp: "0/0",
+                                    temp: "0.0",
+                                    o2: 0,
+                                    rr: 0
+                                },
+                                diagnosis: patient.medicalHistory || "General Care",
+                                lastUpdated: latestVitals ? new Date(latestVitals.createdAt).toLocaleString() : "Never"
+                            };
+                        }
+                        return {
+                            id: patient.id,
+                            name: patient.fullName,
+                            bed: patient.assignedWard || "N/A",
+                            condition: "Stable",
+                            vitals: { hr: 0, bp: "0/0", temp: "0.0", o2: 0, rr: 0 },
+                            diagnosis: patient.medicalHistory || "General Care",
+                            lastUpdated: "Never"
+                        };
+                    } catch (err) {
+                        console.error(`Error fetching vitals for patient ${patient.id}:`, err);
+                        return {
+                            id: patient.id,
+                            name: patient.fullName,
+                            bed: patient.assignedWard || "N/A",
+                            condition: "Stable",
+                            vitals: { hr: 0, bp: "0/0", temp: "0.0", o2: 0, rr: 0 },
+                            diagnosis: patient.medicalHistory || "General Care",
+                            lastUpdated: "Never"
+                        };
+                    }
+                })
+            );
+
+            setPatients(patientsWithVitals);
+        } catch (error) {
+            console.error("Error fetching patients:", error);
+            setPatients([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Real-time search filtering
     const filteredPatients = useMemo(() => {
@@ -55,7 +122,7 @@ export default function NursePatientsPage() {
             patient.diagnosis.toLowerCase().includes(searchQuery.toLowerCase()) ||
             patient.condition.toLowerCase().includes(searchQuery.toLowerCase())
         );
-    }, [searchQuery]);
+    }, [searchQuery, patients]);
 
     const getConditionColor = (condition) => {
         switch (condition) {
@@ -82,11 +149,35 @@ export default function NursePatientsPage() {
 
     const handleSaveVitals = async () => {
         setSaving(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setSaving(false);
-        setShowVitalsModal(false);
-        alert(`Vitals updated for ${selectedPatient.name}`);
+        try {
+            const res = await fetch(`/api/nurse/patients/${selectedPatient.id}/vitals`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    heartRate: vitalsData.hr,
+                    bpSystolic: vitalsData.bpSystolic,
+                    bpDiastolic: vitalsData.bpDiastolic,
+                    temperature: vitalsData.temp,
+                    oxygenSaturation: vitalsData.o2,
+                    respiratoryRate: vitalsData.rr
+                }),
+            });
+
+            if (!res.ok) {
+                throw new Error("Failed to save vitals");
+            }
+
+            // Refresh patients to show updated vitals
+            await fetchPatients();
+
+            setShowVitalsModal(false);
+            window.showToast?.({ type: "success", message: `Vitals updated for ${selectedPatient.name}` });
+        } catch (error) {
+            console.error("Error saving vitals:", error);
+            alert(`Error: ${error.message}`);
+        } finally {
+            setSaving(false);
+        }
     };
 
     const handleShowMenu = (patient) => {
@@ -168,7 +259,14 @@ export default function NursePatientsPage() {
                         </div>
                     </header>
 
-                    {filteredPatients.length === 0 ? (
+                    {loading ? (
+                        <div className="flex items-center justify-center py-20">
+                            <div className="text-center">
+                                <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                                <p className="text-gray-600 dark:text-gray-400">Loading patients...</p>
+                            </div>
+                        </div>
+                    ) : filteredPatients.length === 0 ? (
                         <div className="bg-white dark:bg-gray-800 rounded-2xl p-12 text-center border border-gray-100 dark:border-gray-700">
                             <User className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No patients found</h3>

@@ -50,13 +50,22 @@ export default function NewPatientPage() {
                 body: JSON.stringify(formData),
             });
 
-            if (!res.ok) throw new Error("Failed to create patient");
+            if (!res.ok) {
+                const errorData = await res.json();
+                const errorMessage = errorData.error || "Failed to create patient";
+                alert(errorMessage); // Show alert to user
+                window.showToast?.({ type: "error", message: errorMessage });
+                setLoading(false);
+                return; // Don't throw, just return
+            }
 
             window.showToast?.({ type: "success", message: "Patient registered successfully!" });
             router.push("/dashboard/admin/patients");
         } catch (error) {
-            console.error(error);
-            window.showToast?.({ type: "error", message: "Failed to register patient" });
+            console.error("Registration Error:", error);
+            const errorMessage = error.message || "An unexpected error occurred";
+            alert(errorMessage);
+            window.showToast?.({ type: "error", message: errorMessage });
         } finally {
             setLoading(false);
         }
@@ -95,8 +104,8 @@ export default function NewPatientPage() {
                             <div key={s} className="flex items-center">
                                 <div
                                     className={`h-10 w-10 rounded-full flex items-center justify-center font-bold ${step >= s
-                                            ? "bg-teal-600 text-white"
-                                            : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                                        ? "bg-teal-600 text-white"
+                                        : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
                                         }`}
                                 >
                                     {s}

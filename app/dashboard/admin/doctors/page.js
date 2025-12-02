@@ -22,6 +22,8 @@ export default function DoctorsListPage() {
     const [sortColumn, setSortColumn] = useState("name");
     const [sortDirection, setSortDirection] = useState("asc");
     const [viewMode, setViewMode] = useState("table"); // table or grid
+    const [totalItems, setTotalItems] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -53,16 +55,46 @@ export default function DoctorsListPage() {
             });
 
             const res = await fetch(`/api/admin/doctors?${params}`);
-            if (!res.ok) throw new Error("Failed to fetch doctors");
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`Failed to fetch doctors: ${res.status} ${res.statusText} - ${errorText}`);
+            }
 
             const data = await res.json();
+            console.log("Doctors API Response:", data); // Debug log
             setDoctors(data.doctors || []);
+            setTotalItems(data.pagination?.total || 0);
+            setTotalPages(data.pagination?.totalPages || 0);
         } catch (error) {
             console.error("Error fetching doctors:", error);
+            alert(`Error loading doctors: ${error.message}`); // Show error to user
             setDoctors([]);
+            setTotalItems(0);
+            setTotalPages(0);
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleExport = () => {
+        const headers = ["ID", "Name", "Email", "Phone", "Specialization", "Status"];
+        const csvContent = [
+            headers.join(","),
+            ...doctors.map(d => [
+                d.id,
+                `"${d.name}"`,
+                d.email || "",
+                d.phone || "",
+                d.specialization || "",
+                d.status || ""
+            ].join(","))
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "doctors_export.csv";
+        link.click();
     };
 
     const handleDelete = async (id) => {
@@ -107,14 +139,7 @@ export default function DoctorsListPage() {
                 { value: "general", label: "General Medicine" },
             ],
         },
-        {
-            key: "status",
-            label: "Status",
-            options: [
-                { value: "active", label: "Active" },
-                { value: "inactive", label: "Inactive" },
-            ],
-        },
+        // Note: status field doesn't exist in Doctor schema
     ];
 
     const columns = [
@@ -200,7 +225,7 @@ export default function DoctorsListPage() {
         },
     ];
 
-    const totalPages = Math.ceil((doctors.length || 0) / itemsPerPage);
+    // totalPages is now set from API response
 
     return (
         <div className={dark ? "dark" : ""}>
@@ -287,7 +312,7 @@ export default function DoctorsListPage() {
                         <Pagination
                             currentPage={currentPage}
                             totalPages={totalPages}
-                            totalItems={doctors.length}
+                            totalItems={totalItems}
                             itemsPerPage={itemsPerPage}
                             onPageChange={setCurrentPage}
                             onItemsPerPageChange={setItemsPerPage}

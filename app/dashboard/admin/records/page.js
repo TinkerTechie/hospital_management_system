@@ -182,6 +182,22 @@ export default function MedicalRecordsPage() {
                             </p>
                         </div>
                         <div className="flex gap-3">
+                            <button
+                                onClick={() => {
+                                    // Simple CSV export
+                                    const csv = records.map(r => `"${r.id}","${r.title}","${r.patient?.name}","${r.type}","${r.createdAt}"`).join('\n');
+                                    const blob = new Blob([`"ID","Title","Patient","Type","Date"\n${csv}`], { type: 'text/csv' });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = 'medical-records.csv';
+                                    a.click();
+                                }}
+                                className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+                            >
+                                <Download className="h-4 w-4" />
+                                Export
+                            </button>
                             <Link
                                 href="/dashboard/admin/records/upload"
                                 className="px-4 py-2 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition-colors shadow-lg shadow-teal-200 dark:shadow-none flex items-center gap-2"

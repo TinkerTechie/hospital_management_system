@@ -21,6 +21,8 @@ export default function AppointmentsListPage() {
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [sortColumn, setSortColumn] = useState("date");
     const [sortDirection, setSortDirection] = useState("desc");
+    const [totalItems, setTotalItems] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -52,16 +54,42 @@ export default function AppointmentsListPage() {
             });
 
             const res = await fetch(`/api/admin/appointments?${params}`);
-            if (!res.ok) throw new Error("Failed to fetch appointments");
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`Failed to fetch appointments: ${res.status} ${res.statusText} - ${errorText}`);
+            }
 
             const data = await res.json();
             setAppointments(data.appointments || []);
+            setTotalItems(data.pagination?.total || 0);
+            setTotalPages(data.pagination?.totalPages || 0);
         } catch (error) {
             console.error("Error fetching appointments:", error);
             setAppointments([]);
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleExport = () => {
+        const headers = ["ID", "Patient", "Doctor", "Date", "Time", "Status"];
+        const csvContent = [
+            headers.join(","),
+            ...appointments.map(a => [
+                a.id,
+                `"${a.patient?.name || ""}"`,
+                `"${a.doctor?.name || ""}"`,
+                new Date(a.date).toLocaleDateString(),
+                a.time || "",
+                a.status || ""
+            ].join(","))
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "appointments_export.csv";
+        link.click();
     };
 
     const handleDelete = async (id) => {
@@ -95,24 +123,8 @@ export default function AppointmentsListPage() {
     };
 
     const filterOptions = [
-        {
-            key: "status",
-            label: "Status",
-            options: [
-                { value: "scheduled", label: "Scheduled" },
-                { value: "completed", label: "Completed" },
-                { value: "cancelled", label: "Cancelled" },
-            ],
-        },
-        {
-            key: "type",
-            label: "Type",
-            options: [
-                { value: "consultation", label: "Consultation" },
-                { value: "follow-up", label: "Follow-up" },
-                { value: "emergency", label: "Emergency" },
-            ],
-        },
+        // Note: Appointment schema doesn't have status or type fields
+        // Filters removed until schema is updated
     ];
 
     const columns = [
@@ -203,7 +215,7 @@ export default function AppointmentsListPage() {
         },
     ];
 
-    const totalPages = Math.ceil((appointments.length || 0) / itemsPerPage);
+    // totalPages is now set from API response
 
     return (
         <div className={dark ? "dark" : ""}>
@@ -270,7 +282,7 @@ export default function AppointmentsListPage() {
                         <Pagination
                             currentPage={currentPage}
                             totalPages={totalPages}
-                            totalItems={appointments.length}
+                            totalItems={totalItems}
                             itemsPerPage={itemsPerPage}
                             onPageChange={setCurrentPage}
                             onItemsPerPageChange={setItemsPerPage}

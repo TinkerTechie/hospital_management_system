@@ -1,218 +1,338 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Search, Edit, Save, X, User, Clock, MapPin } from "lucide-react";
+import AdminSidebar from "../../../components/admin/AdminSidebar";
+import SearchBar from "../../../components/shared/SearchBar";
+import FilterBar from "../../../components/shared/FilterBar";
+import DataTable from "../../../components/shared/DataTable";
+import Pagination from "../../../components/shared/Pagination";
+import StatusBadge from "../../../components/shared/StatusBadge";
+import { Plus, Eye, Edit, Trash2, Grid, List, Clock, MapPin } from "lucide-react";
+import Link from "next/link";
 import Swal from "sweetalert2";
 
-export default function AdminNursesPage() {
+export default function NursesListPage() {
+    const [dark, setDark] = useState(false);
     const [nurses, setNurses] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [editingNurse, setEditingNurse] = useState(null);
-
-    // Form states
-    const [shift, setShift] = useState("");
-    const [ward, setWard] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [filters, setFilters] = useState({});
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [sortColumn, setSortColumn] = useState("fullName");
+    const [sortDirection, setSortDirection] = useState("asc");
+    const [viewMode, setViewMode] = useState("table"); // table or grid
+    const [totalItems, setTotalItems] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
 
     useEffect(() => {
+        if (typeof window !== "undefined") {
+            const theme = localStorage.getItem("theme");
+            setDark(theme === "dark");
+        }
         fetchNurses();
-    }, []);
+    }, [currentPage, itemsPerPage, searchQuery, filters, sortColumn, sortDirection]);
+
+    const toggleDark = () => {
+        const newTheme = !dark;
+        setDark(newTheme);
+        if (typeof window !== "undefined") {
+            localStorage.setItem("theme", newTheme ? "dark" : "light");
+            document.documentElement.classList.toggle("dark", newTheme);
+        }
+    };
 
     const fetchNurses = async () => {
         try {
-            const res = await fetch("/api/admin/nurses");
-            if (res.ok) {
-                const data = await res.json();
-                setNurses(data);
+            setLoading(true);
+            const params = new URLSearchParams({
+                page: currentPage,
+                limit: itemsPerPage,
+                search: searchQuery,
+                sortBy: sortColumn,
+                sortOrder: sortDirection,
+                ...filters,
+            });
+
+            const res = await fetch(`/api/admin/nurses?${params}`);
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`Failed to fetch nurses: ${res.status} ${res.statusText} - ${errorText}`);
             }
+
+            const data = await res.json();
+            console.log("Nurses API Response:", data); // Debug log
+            setNurses(data.nurses || []);
+            setTotalItems(data.pagination?.total || 0);
+            setTotalPages(data.pagination?.totalPages || 0);
         } catch (error) {
             console.error("Error fetching nurses:", error);
+            alert(`Error loading nurses: ${error.message}`); // Show error to user
+            setNurses([]);
+            setTotalItems(0);
+            setTotalPages(0);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleEdit = (nurse) => {
-        setEditingNurse(nurse);
-        setShift(nurse.shiftTiming || "");
-        setWard(nurse.assignedWard || "");
+    const handleExport = () => {
+        const headers = ["ID", "Name", "Email", "Phone", "Shift", "Ward"];
+        const csvContent = [
+            headers.join(","),
+            ...nurses.map(n => [
+                n.id,
+                `"${n.fullName}"`,
+                n.email || "",
+                n.phone || "",
+                `"${n.shiftTiming || ""}"`,
+                `"${n.assignedWard || ""}"`
+            ].join(","))
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "nurses_export.csv";
+        link.click();
     };
 
-    const handleSave = async () => {
-        if (!editingNurse) return;
+    const handleDelete = async (id) => {
+        const result = await Swal.fire({
+            title: "Are you sure?",
+            text: "You won't be able to revert this!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
+            confirmButtonText: "Yes, delete it!",
+        });
 
-        try {
-            const res = await fetch("/api/admin/nurses", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    id: editingNurse.id,
-                    shiftTiming: shift,
-                    assignedWard: ward,
-                }),
-            });
+        if (result.isConfirmed) {
+            try {
+                const res = await fetch(`/api/admin/nurses?id=${id}`, {
+                    method: "DELETE",
+                });
 
-            if (res.ok) {
-                Swal.fire("Success", "Nurse details updated!", "success");
-                setEditingNurse(null);
-                fetchNurses(); // Refresh list
-            } else {
-                Swal.fire("Error", "Failed to update details", "error");
+                if (res.ok) {
+                    Swal.fire("Deleted!", "Nurse has been deleted.", "success");
+                    fetchNurses();
+                } else {
+                    Swal.fire("Error!", "Failed to delete nurse.", "error");
+                }
+            } catch (error) {
+                console.error("Error deleting nurse:", error);
+                Swal.fire("Error!", "Something went wrong.", "error");
             }
-        } catch (error) {
-            Swal.fire("Error", "Something went wrong", "error");
         }
     };
 
-    const filteredNurses = nurses.filter((n) =>
-        n.fullName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filterOptions = [
+        {
+            key: "shiftTiming",
+            label: "Shift",
+            options: [
+                { value: "08:00 AM - 04:00 PM", label: "Morning" },
+                { value: "04:00 PM - 12:00 AM", label: "Evening" },
+                { value: "12:00 AM - 08:00 AM", label: "Night" },
+            ],
+        },
+        {
+            key: "assignedWard",
+            label: "Ward",
+            options: [
+                { value: "Emergency", label: "Emergency" },
+                { value: "ICU", label: "ICU" },
+                { value: "Pediatrics", label: "Pediatrics" },
+                { value: "General Ward", label: "General Ward" },
+                { value: "Surgery", label: "Surgery" },
+            ],
+        },
+    ];
 
-    return (
-        <div className="p-6 max-w-7xl mx-auto">
-            <div className="flex justify-between items-center mb-8">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Nurse Management</h1>
-                    <p className="text-gray-500 text-sm">Manage shifts and ward assignments</p>
+    const columns = [
+        {
+            key: "id",
+            label: "Nurse ID",
+            render: (row) => (
+                <div className="font-medium text-gray-900 dark:text-white">
+                    #{row.id.substring(0, 8)}...
                 </div>
-                <div className="relative">
-                    <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-                    <input
-                        type="text"
-                        placeholder="Search nurses..."
-                        className="pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none w-64"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-            </div>
-
-            {loading ? (
-                <div className="text-center py-10">Loading...</div>
-            ) : (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <table className="w-full text-left">
-                        <thead className="bg-gray-50 text-gray-600 text-sm uppercase font-semibold">
-                            <tr>
-                                <th className="p-4">Nurse</th>
-                                <th className="p-4">Current Shift</th>
-                                <th className="p-4">Assigned Ward</th>
-                                <th className="p-4 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {filteredNurses.map((nurse) => (
-                                <tr key={nurse.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="p-4 flex items-center gap-3">
-                                        <div className="h-10 w-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold">
-                                            {nurse.fullName.charAt(0)}
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-gray-900">{nurse.fullName}</p>
-                                            <p className="text-xs text-gray-500">{nurse.user?.email}</p>
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 text-sm font-medium">
-                                            <Clock className="h-3.5 w-3.5" />
-                                            {nurse.shiftTiming || "Not Assigned"}
-                                        </span>
-                                    </td>
-                                    <td className="p-4">
-                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 text-sm font-medium">
-                                            <MapPin className="h-3.5 w-3.5" />
-                                            {nurse.assignedWard || "Not Assigned"}
-                                        </span>
-                                    </td>
-                                    <td className="p-4 text-right">
-                                        <button
-                                            onClick={() => handleEdit(nurse)}
-                                            className="p-2 text-gray-500 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-all"
-                                        >
-                                            <Edit className="h-5 w-5" />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    {filteredNurses.length === 0 && (
-                        <div className="text-center py-10 text-gray-500">No nurses found.</div>
-                    )}
-                </div>
-            )}
-
-            {/* EDIT MODAL */}
-            {editingNurse && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in duration-200">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold text-gray-800">Edit Assignment</h2>
-                            <button onClick={() => setEditingNurse(null)} className="text-gray-400 hover:text-gray-600">
-                                <X className="h-6 w-6" />
-                            </button>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Nurse Name</label>
-                                <input
-                                    type="text"
-                                    value={editingNurse.fullName}
-                                    disabled
-                                    className="w-full p-2 bg-gray-100 border rounded-lg text-gray-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Shift Timing</label>
-                                <select
-                                    value={shift}
-                                    onChange={(e) => setShift(e.target.value)}
-                                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
-                                >
-                                    <option value="">Select Shift</option>
-                                    <option value="08:00 AM - 04:00 PM">Morning (8 AM - 4 PM)</option>
-                                    <option value="04:00 PM - 12:00 AM">Evening (4 PM - 12 AM)</option>
-                                    <option value="12:00 AM - 08:00 AM">Night (12 AM - 8 AM)</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Assigned Ward</label>
-                                <select
-                                    value={ward}
-                                    onChange={(e) => setWard(e.target.value)}
-                                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
-                                >
-                                    <option value="">Select Ward</option>
-                                    <option value="Emergency">Emergency</option>
-                                    <option value="ICU">ICU</option>
-                                    <option value="Pediatrics">Pediatrics</option>
-                                    <option value="General Ward">General Ward</option>
-                                    <option value="Surgery">Surgery</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="mt-8 flex gap-3">
-                            <button
-                                onClick={() => setEditingNurse(null)}
-                                className="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSave}
-                                className="flex-1 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium flex items-center justify-center gap-2"
-                            >
-                                <Save className="h-4 w-4" />
-                                Save Changes
-                            </button>
-                        </div>
+            ),
+        },
+        {
+            key: "fullName",
+            label: "Nurse Name",
+            render: (row) => (
+                <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center text-teal-700 dark:text-teal-300 font-bold text-sm">
+                        {row.fullName?.charAt(0) || "N"}
+                    </div>
+                    <div>
+                        <p className="font-medium text-gray-900 dark:text-white">{row.fullName}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{row.email}</p>
                     </div>
                 </div>
-            )}
+            ),
+        },
+        {
+            key: "shiftTiming",
+            label: "Shift",
+            render: (row) => (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-medium">
+                    <Clock className="h-3.5 w-3.5" />
+                    {row.shiftTiming || "Not Assigned"}
+                </span>
+            ),
+        },
+        {
+            key: "assignedWard",
+            label: "Ward",
+            render: (row) => (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm font-medium">
+                    <MapPin className="h-3.5 w-3.5" />
+                    {row.assignedWard || "Not Assigned"}
+                </span>
+            ),
+        },
+        {
+            key: "phone",
+            label: "Contact",
+            render: (row) => (
+                <span className="text-sm text-gray-600 dark:text-gray-300">{row.phone || "N/A"}</span>
+            ),
+        },
+        {
+            key: "actions",
+            label: "Actions",
+            sortable: false,
+            render: (row) => (
+                <div className="flex items-center gap-2">
+                    <Link
+                        href={`/dashboard/admin/nurses/${row.id}`}
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
+                        title="View Profile"
+                    >
+                        <Eye className="h-4 w-4" />
+                    </Link>
+                    <Link
+                        href={`/dashboard/admin/nurses/${row.id}/edit`}
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                        title="Edit"
+                    >
+                        <Edit className="h-4 w-4" />
+                    </Link>
+                    <button
+                        onClick={() => handleDelete(row.id)}
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                        title="Delete"
+                    >
+                        <Trash2 className="h-4 w-4" />
+                    </button>
+                </div>
+            ),
+        },
+    ];
+
+    return (
+        <div className={dark ? "dark" : ""}>
+            <div className="min-h-screen flex font-sans text-gray-900 transition-colors duration-300">
+                <div className="hidden md:block">
+                    <AdminSidebar dark={dark} toggleDark={toggleDark} />
+                </div>
+
+                <main className="flex-1 p-6 md:p-10 max-w-7xl mx-auto overflow-y-auto">
+                    <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                                Nurses Management
+                            </h1>
+                            <p className="text-gray-500 dark:text-gray-400">
+                                Manage nurse profiles, shifts, and ward assignments
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            <div className="flex gap-2 bg-white dark:bg-gray-800 rounded-xl p-1 border border-gray-200 dark:border-gray-700">
+                                <button
+                                    onClick={() => setViewMode("table")}
+                                    className={`p-2 rounded-lg transition-colors ${viewMode === "table"
+                                        ? "bg-teal-600 text-white"
+                                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                        }`}
+                                >
+                                    <List className="h-4 w-4" />
+                                </button>
+                                <button
+                                    onClick={() => setViewMode("grid")}
+                                    className={`p-2 rounded-lg transition-colors ${viewMode === "grid"
+                                        ? "bg-teal-600 text-white"
+                                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                        }`}
+                                >
+                                    <Grid className="h-4 w-4" />
+                                </button>
+                            </div>
+                            <button
+                                onClick={handleExport}
+                                className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            >
+                                Export
+                            </button>
+                            <Link
+                                href="/dashboard/admin/nurses/new"
+                                className="px-4 py-2 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition-colors shadow-lg shadow-teal-200 dark:shadow-none flex items-center gap-2"
+                            >
+                                <Plus className="h-4 w-4" />
+                                Add Nurse
+                            </Link>
+                        </div>
+                    </header>
+
+                    {/* Search and Filters */}
+                    <div className="mb-6 space-y-4">
+                        <div className="flex flex-col md:flex-row gap-4">
+                            <SearchBar
+                                value={searchQuery}
+                                onChange={setSearchQuery}
+                                placeholder="Search by name, email, or phone..."
+                                className="flex-1"
+                            />
+                        </div>
+                        <FilterBar
+                            filters={filterOptions}
+                            activeFilters={filters}
+                            onFilterChange={(key, value) => setFilters({ ...filters, [key]: value })}
+                            onClearAll={() => setFilters({})}
+                        />
+                    </div>
+
+                    {/* Table */}
+                    <DataTable
+                        columns={columns}
+                        data={nurses}
+                        loading={loading}
+                        sortColumn={sortColumn}
+                        sortDirection={sortDirection}
+                        onSort={(column, direction) => {
+                            setSortColumn(column);
+                            setSortDirection(direction);
+                        }}
+                        emptyMessage="No nurses found. Add your first nurse to get started."
+                    />
+
+                    {/* Pagination */}
+                    {!loading && nurses.length > 0 && (
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            totalItems={totalItems}
+                            itemsPerPage={itemsPerPage}
+                            onPageChange={setCurrentPage}
+                            onItemsPerPageChange={setItemsPerPage}
+                        />
+                    )}
+                </main>
+            </div>
         </div>
     );
 }

@@ -5,7 +5,7 @@ import { prisma } from "../../../../lib/db";
 
 export async function GET(request) {
     try {
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const token = cookieStore.get("token");
 
         if (!token) {
@@ -95,7 +95,7 @@ export async function GET(request) {
 
 export async function POST(request) {
     try {
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const token = cookieStore.get("token");
 
         if (!token) {
@@ -117,20 +117,49 @@ export async function POST(request) {
 
         const data = await request.json();
 
-        // Note: In a real app, we should create a User first, but for now assuming we just create Patient record linked to a placeholder or existing user is complex.
-        // For simplicity in this task, we will just update the Patient record if it exists, or create one.
-        // However, the schema requires `userId`.
-        // Since we are just adding `assignedWard` support, let's assume we are updating an existing patient or creating one properly.
+        // Create User and Patient transactionally
+        const result = await prisma.$transaction(async (prisma) => {
+            // 1. Create User
+            const user = await prisma.user.create({
+                data: {
+                    name: data.name,
+                    email: data.email,
+                    password: "$2b$10$EpWa/..", // Default password
+                    role: "PATIENT",
+                },
+            });
 
-        // Actually, let's just support PUT for updating ward for now, as creating a full patient requires User creation.
-        // But the user asked for "edit".
+            // 2. Create Patient Profile
+            const patient = await prisma.patient.create({
+                data: {
+                    userId: user.id,
+                    fullName: data.name,
+                    age: data.age ? parseInt(data.age) : null, // Calculate from DOB if needed
+                    bloodGroup: data.bloodGroup,
+                    assignedWard: data.assignedWard,
+                    medicalHistory: data.medicalConditions,
+                    // Add other fields as needed
+                },
+            });
 
-        return NextResponse.json({ error: "Create not implemented yet" }, { status: 501 });
+            return patient;
+        }, {
+            maxWait: 5000, // Wait longer for connection
+            timeout: 10000 // Allow longer transaction time
+        });
+
+        return NextResponse.json({ patient: result }, { status: 201 });
 
     } catch (error) {
         console.error("Error creating patient:", error);
+        if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
+            return NextResponse.json(
+                { error: "A user with this email already exists." },
+                { status: 409 }
+            );
+        }
         return NextResponse.json(
-            { error: "Failed to create patient" },
+            { error: error.message || "Failed to create patient" },
             { status: 500 }
         );
     }
@@ -138,7 +167,7 @@ export async function POST(request) {
 
 export async function PUT(request) {
     try {
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const token = cookieStore.get("token");
 
         if (!token) {
@@ -177,7 +206,7 @@ export async function PUT(request) {
 
 export async function DELETE(request) {
     try {
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const token = cookieStore.get("token");
 
         if (!token) {
@@ -205,7 +234,7 @@ export async function DELETE(request) {
 
         // Check if patient exists
         const patient = await prisma.patient.findUnique({
-            where: { id: parseInt(id) },
+            where: { id },
         });
 
         if (!patient) {
@@ -214,7 +243,7 @@ export async function DELETE(request) {
 
         // Delete patient
         await prisma.patient.delete({
-            where: { id: parseInt(id) },
+            where: { id },
         });
 
         return NextResponse.json({ message: "Patient deleted successfully" }, { status: 200 });

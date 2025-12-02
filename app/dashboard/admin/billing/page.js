@@ -119,9 +119,9 @@ export default function BillingListPage() {
             key: "amount",
             label: "Amount",
             render: (row) => (
-                <div className="font-semibold text-gray-900 dark:text-white">
-                    ${row.totalAmount?.toFixed(2) || "0.00"}
-                </div>
+                <span className="font-medium text-gray-900 dark:text-white">
+                    ₹{row.totalAmount.toFixed(2)}
+                </span>
             ),
         },
         {
@@ -129,7 +129,7 @@ export default function BillingListPage() {
             label: "Paid",
             render: (row) => (
                 <span className="text-sm text-green-600 dark:text-green-400">
-                    ${row.paidAmount?.toFixed(2) || "0.00"}
+                    ₹{row.paidAmount?.toFixed(2) || "0.00"}
                 </span>
             ),
         },
@@ -207,19 +207,19 @@ export default function BillingListPage() {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                         <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Revenue</p>
-                            <p className="text-2xl font-bold text-gray-900 dark:text-white">$45,230</p>
+                            <p className="text-2xl font-bold text-gray-900 dark:text-white">₹45,230</p>
                         </div>
                         <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Pending</p>
-                            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">$8,450</p>
+                            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">₹8,450</p>
                         </div>
                         <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Overdue</p>
-                            <p className="text-2xl font-bold text-red-600 dark:text-red-400">$2,100</p>
+                            <p className="text-2xl font-bold text-red-600 dark:text-red-400">₹2,100</p>
                         </div>
                         <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">This Month</p>
-                            <p className="text-2xl font-bold text-green-600 dark:text-green-400">$12,340</p>
+                            <p className="text-2xl font-bold text-green-600 dark:text-green-400">₹12,340</p>
                         </div>
                     </div>
 

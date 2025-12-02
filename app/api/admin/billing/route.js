@@ -5,7 +5,7 @@ import { prisma } from "../../../../lib/db";
 
 export async function GET(request) {
     try {
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const token = cookieStore.get("token");
 
         if (!token) {
@@ -86,7 +86,7 @@ export async function GET(request) {
 
 export async function POST(request) {
     try {
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const token = cookieStore.get("token");
 
         if (!token) {

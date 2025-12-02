@@ -6,7 +6,7 @@ import { prisma } from "../../../../lib/db";
 // POST: Send a notification to a user or all users of a role
 export async function POST(req) {
     try {
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const token = cookieStore.get("token");
 
         if (!token) {

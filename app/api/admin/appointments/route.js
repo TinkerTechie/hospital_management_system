@@ -5,7 +5,7 @@ import { prisma } from "../../../../lib/db";
 
 export async function GET(request) {
     try {
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const token = cookieStore.get("token");
 
         if (!token) {
@@ -22,7 +22,7 @@ export async function GET(request) {
         const page = parseInt(searchParams.get("page") || "1");
         const limit = parseInt(searchParams.get("limit") || "10");
         const search = searchParams.get("search") || "";
-        const sortBy = searchParams.get("sortBy") || "date";
+        const sortBy = searchParams.get("sortBy") || "appointmentDate"; // Use appointmentDate instead of date
         const sortOrder = searchParams.get("sortOrder") || "desc";
         const status = searchParams.get("status");
         const type = searchParams.get("type");
@@ -35,13 +35,12 @@ export async function GET(request) {
                 search
                     ? {
                         OR: [
-                            { patient: { name: { contains: search, mode: "insensitive" } } },
-                            { doctor: { name: { contains: search, mode: "insensitive" } } },
+                            { patient: { fullName: { contains: search, mode: "insensitive" } } },
+                            { doctor: { fullName: { contains: search, mode: "insensitive" } } },
                         ],
                     }
                     : {},
-                status && status !== "all" ? { status } : {},
-                type && type !== "all" ? { type } : {},
+                // Note: status and type fields don't exist in Appointment schema
             ],
         };
 
@@ -51,20 +50,36 @@ export async function GET(request) {
                 where,
                 skip,
                 take: limit,
-                orderBy: { [sortBy]: sortOrder },
+                orderBy: { [sortBy === "date" ? "appointmentDate" : sortBy]: sortOrder }, // Map date to appointmentDate
                 include: {
                     patient: {
                         select: {
                             id: true,
-                            name: true,
-                            phone: true,
-                            email: true,
+                            fullName: true,
+                            // phone: true, // Patient has phone? Let's check schema. No, User has phone? Or Patient?
+                            // Schema: Patient has no phone. User has no phone?
+                            // User model: name, email, image.
+                            // Doctor model: phone.
+                            // Nurse model: phone.
+                            // Patient model: no phone.
+                            // Wait, let's check schema again.
+                            // Patient model: fullName, age, bloodGroup, medicalHistory, assignedWard.
+                            // User model: email.
+                            // So Patient has NO phone.
+                            // We should remove phone from selection or select from User if added?
+                            // User schema: email, image. No phone.
+                            // So we can't fetch phone for patient.
+                            user: {
+                                select: {
+                                    email: true,
+                                }
+                            }
                         },
                     },
                     doctor: {
                         select: {
                             id: true,
-                            name: true,
+                            fullName: true,
                             specialization: true,
                         },
                     },
@@ -74,7 +89,18 @@ export async function GET(request) {
         ]);
 
         return NextResponse.json({
-            appointments,
+            appointments: appointments.map(a => ({
+                ...a,
+                patient: {
+                    ...a.patient,
+                    name: a.patient?.fullName,
+                    email: a.patient?.user?.email,
+                },
+                doctor: {
+                    ...a.doctor,
+                    name: a.doctor?.fullName,
+                }
+            })),
             pagination: {
                 total,
                 page,
@@ -85,7 +111,7 @@ export async function GET(request) {
     } catch (error) {
         console.error("Error fetching appointments:", error);
         return NextResponse.json(
-            { error: "Failed to fetch appointments" },
+            { error: error.message || "Failed to fetch appointments" },
             { status: 500 }
         );
     }
@@ -93,7 +119,7 @@ export async function GET(request) {
 
 export async function POST(request) {
     try {
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const token = cookieStore.get("token");
 
         if (!token) {
@@ -118,11 +144,12 @@ export async function POST(request) {
             data: {
                 patientId: data.patientId,
                 doctorId: data.doctorId,
-                date: new Date(data.date),
+                appointmentDate: new Date(data.date), // Use appointmentDate as per schema
                 time: data.time,
-                type: data.type || "consultation",
-                notes: data.notes,
-                status: "scheduled",
+                reason: data.notes, // Map notes to reason
+                // type: data.type || "consultation", // Schema doesn't have type field
+                // notes: data.notes, // Schema doesn't have notes field
+                // status: "scheduled", // Schema doesn't have status field
             },
             include: {
                 patient: true,
@@ -142,7 +169,7 @@ export async function POST(request) {
 
 export async function DELETE(request) {
     try {
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const token = cookieStore.get("token");
 
         if (!token) {
@@ -170,7 +197,7 @@ export async function DELETE(request) {
 
         // Check if appointment exists
         const appointment = await prisma.appointment.findUnique({
-            where: { id: parseInt(id) },
+            where: { id },
         });
 
         if (!appointment) {
@@ -179,7 +206,7 @@ export async function DELETE(request) {
 
         // Delete appointment
         await prisma.appointment.delete({
-            where: { id: parseInt(id) },
+            where: { id },
         });
 
         return NextResponse.json({ message: "Appointment deleted successfully" }, { status: 200 });

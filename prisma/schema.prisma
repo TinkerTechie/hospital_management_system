@@ -141,8 +141,54 @@ model Patient {
   prescriptions  Prescription[]
   medicalRecords MedicalRecord[]
   updates        PatientUpdate[]
+  invoices       Invoice[]
+  vitals         Vitals[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+}
+
+// =============================
+// VITALS MODEL
+// =============================
+model Vitals {
+  id        String   @id @default(uuid())
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id])
+  
+  heartRate       Int?    // BPM
+  bpSystolic      Int?    // mmHg
+  bpDiastolic     Int?    // mmHg
+  temperature     Float?  // Fahrenheit
+  oxygenSaturation Int?   // Percentage
+  respiratoryRate Int?    // breaths per minute
+  
+  recordedBy String? // Nurse/Doctor ID or name
+  notes      String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// =============================
+// INVOICE MODEL
+// =============================
+model Invoice {
+  id            String   @id @default(uuid())
+  invoiceNumber String   @unique
+  
+  patientId     String
+  patient       Patient  @relation(fields: [patientId], references: [id])
+  
+  date          DateTime
+  items         Json     // Array of items
+  totalAmount   Float
+  paidAmount    Float    @default(0)
+  discount      Float    @default(0)
+  paymentMethod String?
+  status        String   // paid, pending, overdue
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 // =============================
@@ -247,10 +293,14 @@ model MedicalRecord {
   patient Patient @relation(fields: [patientId], references: [id])
   doctor  Doctor? @relation(fields: [doctorId], references: [id])
 
-  diagnosis String
-  treatment String?
-  notes     String?
-  date      DateTime @default(now())
+  title       String?
+  description String?
+  type        String?   // lab-report, prescription, etc.
+  
+  diagnosis   String?
+  treatment   String?
+  notes       String?
+  date        DateTime @default(now())
 
   attachments Json? // For file uploads (X-rays, reports)
 
@@ -567,4 +617,23 @@ model CallbackRequest {
   phone     String
   status    String   @default("Pending") // Pending, Contacted, Resolved
   createdAt DateTime @default(now())
+}
+
+// =============================
+// INVENTORY MODEL
+// =============================
+model InventoryItem {
+  id           String    @id @default(uuid())
+  name         String
+  category     String    // Medicines, Equipment, Supplies
+  description  String?
+  quantity     Int
+  unit         String    // boxes, units, kg, etc.
+  reorderLevel Int       @default(10)
+  expiryDate   DateTime?
+  supplier     String?
+  price        Float?
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }

@@ -5,7 +5,7 @@ import { prisma } from "../../../../../lib/db";
 
 export async function GET(request) {
     try {
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const token = cookieStore.get("token");
 
         if (!token) {
@@ -28,16 +28,16 @@ export async function GET(request) {
             activeDoctors,
             monthlyInvoices,
         ] = await Promise.all([
-            prisma.patient.count({ where: { status: "active" } }),
+            prisma.patient.count(),
             prisma.appointment.count({
                 where: {
-                    date: {
+                    appointmentDate: {
                         gte: new Date(new Date().setHours(0, 0, 0, 0)),
                         lt: new Date(new Date().setHours(23, 59, 59, 999)),
                     },
                 },
             }),
-            prisma.doctor.count({ where: { status: "active" } }),
+            prisma.doctor.count(),
             prisma.invoice.findMany({
                 where: {
                     date: {
