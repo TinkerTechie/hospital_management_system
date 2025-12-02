@@ -97,21 +97,17 @@ export default function NewAppointmentPage() {
                                         required
                                         value={selectedDoctor}
                                         onChange={(e) => setSelectedDoctor(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition-all appearance-none bg-white"
+                                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition-all appearance-none bg-white text-gray-900"
                                     >
-                                        <option value="">Choose a specialist...</option>
+                                        <option value="" className="text-gray-900">Choose a specialist...</option>
                                         {doctors.map((doc) => (
-                                            <option key={doc.id} value={doc.doctorProfile?.id}>
-                                                {doc.name} - {doc.doctorProfile?.specialization}
+                                            <option key={doc.id} value={doc.id} className="text-gray-900">
+                                                {doc.fullName} - {doc.specialization}
                                             </option>
                                         ))}
                                         {/* Fallback if no doctors loaded yet */}
                                         {doctors.length === 0 && (
-                                            <>
-                                                <option value="doc1">Dr. Priya Sharma - Cardiology</option>
-                                                <option value="doc2">Dr. Arjun Patel - Neurology</option>
-                                                <option value="doc3">Dr. Anjali Reddy - Pediatrics</option>
-                                            </>
+                                            <option disabled>No doctors available</option>
                                         )}
                                     </select>
                                 </div>
@@ -129,7 +125,7 @@ export default function NewAppointmentPage() {
                                             min="2025-01-01"
                                             value={date}
                                             onChange={(e) => setDate(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition-all"
+                                            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition-all text-gray-900"
                                         />
                                     </div>
                                 </div>
@@ -143,15 +139,15 @@ export default function NewAppointmentPage() {
                                             required
                                             value={time}
                                             onChange={(e) => setTime(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition-all appearance-none bg-white"
+                                            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition-all appearance-none bg-white text-gray-900"
                                         >
-                                            <option value="">Select time...</option>
-                                            <option value="09:00 AM">09:00 AM</option>
-                                            <option value="10:00 AM">10:00 AM</option>
-                                            <option value="11:00 AM">11:00 AM</option>
-                                            <option value="02:00 PM">02:00 PM</option>
-                                            <option value="03:00 PM">03:00 PM</option>
-                                            <option value="04:00 PM">04:00 PM</option>
+                                            <option value="" className="text-gray-900">Select time...</option>
+                                            <option value="09:00 AM" className="text-gray-900">09:00 AM</option>
+                                            <option value="10:00 AM" className="text-gray-900">10:00 AM</option>
+                                            <option value="11:00 AM" className="text-gray-900">11:00 AM</option>
+                                            <option value="02:00 PM" className="text-gray-900">02:00 PM</option>
+                                            <option value="03:00 PM" className="text-gray-900">03:00 PM</option>
+                                            <option value="04:00 PM" className="text-gray-900">04:00 PM</option>
                                         </select>
                                     </div>
                                 </div>
@@ -166,7 +162,7 @@ export default function NewAppointmentPage() {
                                     value={reason}
                                     onChange={(e) => setReason(e.target.value)}
                                     placeholder="Briefly describe your symptoms or reason for appointment..."
-                                    className="w-full p-4 rounded-xl border border-gray-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition-all resize-none"
+                                    className="w-full p-4 rounded-xl border border-gray-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition-all resize-none text-gray-900"
                                 ></textarea>
                             </div>
 

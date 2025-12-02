@@ -8,12 +8,31 @@ import Link from "next/link";
 export default function PatientAppointmentsPage() {
   const [dark, setDark] = useState(false);
   const [activeTab, setActiveTab] = useState("upcoming");
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const theme = localStorage.getItem("theme");
       setDark(theme === "dark");
     }
+
+    // Fetch appointments
+    async function fetchAppointments() {
+      try {
+        const res = await fetch("/api/patient"); // Reusing the patient dashboard API which returns appointments
+        if (res.ok) {
+          const data = await res.json();
+          setAppointments(data.appointments || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch appointments:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchAppointments();
   }, []);
 
   const toggleDark = () => {
@@ -29,15 +48,36 @@ export default function PatientAppointmentsPage() {
     }
   };
 
-  // Mock Data
-  const appointments = [
-    { id: 1, doctor: "Dr. Sarah Johnson", specialty: "Cardiologist", date: "Nov 24, 2023", time: "10:00 AM", type: "In-Person", location: "Room 304, Main Wing", status: "upcoming", image: "https://placehold.co/100x100/0D9488/FFFFFF?text=Dr" },
-    { id: 2, doctor: "Dr. Michael Chen", specialty: "Dermatologist", date: "Nov 28, 2023", time: "02:30 PM", type: "Video Call", location: "Online", status: "upcoming", image: "https://placehold.co/100x100/2563EB/FFFFFF?text=Dr" },
-    { id: 3, doctor: "Dr. Emily Wilson", specialty: "General Physician", date: "Oct 15, 2023", time: "09:15 AM", type: "In-Person", location: "Room 102, East Wing", status: "past", image: "https://placehold.co/100x100/D97706/FFFFFF?text=Dr" },
-    { id: 4, doctor: "Dr. James Brown", specialty: "Orthopedic", date: "Sep 20, 2023", time: "11:00 AM", type: "In-Person", location: "Room 205, West Wing", status: "past", image: "https://placehold.co/100x100/DC2626/FFFFFF?text=Dr" },
-  ];
+  // Filter appointments based on tab
+  const filteredAppointments = appointments.filter(a => {
+    const apptDate = new Date(a.appointmentDate);
+    const now = new Date();
+    if (activeTab === "upcoming") {
+      return apptDate >= now;
+    } else {
+      return apptDate < now;
+    }
+  });
 
-  const filteredAppointments = appointments.filter(a => a.status === activeTab);
+  const handleCancel = async (id) => {
+    if (!confirm("Are you sure you want to cancel this appointment?")) return;
+
+    try {
+      const res = await fetch(`/api/appointments/${id}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        setAppointments(appointments.filter((a) => a.id !== id));
+        alert("Appointment cancelled successfully");
+      } else {
+        alert("Failed to cancel appointment");
+      }
+    } catch (error) {
+      console.error("Error cancelling appointment:", error);
+      alert("An error occurred");
+    }
+  };
 
   return (
     <div className={dark ? "dark" : ""}>
@@ -52,9 +92,9 @@ export default function PatientAppointmentsPage() {
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Appointments</h1>
               <p className="text-gray-500 dark:text-gray-400">View upcoming visits and past history.</p>
             </div>
-            <button className="px-6 py-2.5 bg-teal-600 text-white font-medium rounded-xl hover:bg-teal-700 transition-colors shadow-lg shadow-teal-200 dark:shadow-none flex items-center gap-2">
+            <Link href="/dashboard/patient/appointments/new" className="px-6 py-2.5 bg-teal-600 text-white font-medium rounded-xl hover:bg-teal-700 transition-colors shadow-lg shadow-teal-200 dark:shadow-none flex items-center gap-2">
               <Calendar className="h-4 w-4" /> Book New
-            </button>
+            </Link>
           </header>
 
           {/* Tabs */}
@@ -87,7 +127,9 @@ export default function PatientAppointmentsPage() {
 
           {/* Appointments List */}
           <div className="space-y-4">
-            {filteredAppointments.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-12">Loading appointments...</div>
+            ) : filteredAppointments.length === 0 ? (
               <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
                 <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white">No appointments found</h3>
@@ -99,23 +141,30 @@ export default function PatientAppointmentsPage() {
                   <div className="flex flex-col md:flex-row gap-6">
                     {/* Date Box */}
                     <div className="flex-shrink-0 flex flex-col items-center justify-center w-full md:w-24 bg-teal-50 dark:bg-teal-900/20 rounded-xl p-4 border border-teal-100 dark:border-teal-900/30">
-                      <span className="text-xs font-bold text-teal-600 dark:text-teal-400 uppercase">{appt.date.split(" ")[0]}</span>
-                      <span className="text-2xl font-bold text-teal-700 dark:text-teal-300">{appt.date.split(" ")[1].replace(",", "")}</span>
-                      <span className="text-xs text-teal-600 dark:text-teal-400">{appt.date.split(" ")[2]}</span>
+                      <span className="text-xs font-bold text-teal-600 dark:text-teal-400 uppercase">
+                        {new Date(appt.appointmentDate).toLocaleString('default', { month: 'short' })}
+                      </span>
+                      <span className="text-2xl font-bold text-teal-700 dark:text-teal-300">
+                        {new Date(appt.appointmentDate).getDate()}
+                      </span>
+                      <span className="text-xs text-teal-600 dark:text-teal-400">
+                        {new Date(appt.appointmentDate).getFullYear()}
+                      </span>
                     </div>
 
                     {/* Details */}
                     <div className="flex-1">
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <h3 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">{appt.doctor}</h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">{appt.specialty}</p>
+                          <h3 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+                            {appt.doctor?.fullName || "Unknown Doctor"}
+                          </h3>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {appt.doctor?.specialization || "General"}
+                          </p>
                         </div>
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${appt.type === "Video Call"
-                          ? "bg-purple-50 text-purple-700 border-purple-100 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800"
-                          : "bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800"
-                          }`}>
-                          {appt.type}
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium border bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800`}>
+                          In-Person
                         </span>
                       </div>
 
@@ -125,8 +174,8 @@ export default function PatientAppointmentsPage() {
                           {appt.time}
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                          {appt.type === "Video Call" ? <Video className="h-4 w-4 text-gray-400" /> : <MapPin className="h-4 w-4 text-gray-400" />}
-                          {appt.location}
+                          <MapPin className="h-4 w-4 text-gray-400" />
+                          Hospital Main Wing
                         </div>
                       </div>
                     </div>
@@ -138,7 +187,10 @@ export default function PatientAppointmentsPage() {
                           <button className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors whitespace-nowrap">
                             Reschedule
                           </button>
-                          <button className="px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-medium rounded-lg transition-colors whitespace-nowrap">
+                          <button
+                            onClick={() => handleCancel(appt.id)}
+                            className="px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+                          >
                             Cancel
                           </button>
                         </>
@@ -147,9 +199,6 @@ export default function PatientAppointmentsPage() {
                           <button className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors whitespace-nowrap">
                             Summary
                           </button>
-                          <Link href="/dashboard/patient/records" className="px-4 py-2 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 text-sm font-medium rounded-lg hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors whitespace-nowrap flex items-center gap-1">
-                            <FileText className="h-3 w-3" /> View Report
-                          </Link>
                         </div>
                       )}
                     </div>

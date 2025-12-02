@@ -1,12 +1,36 @@
-// app/api/appointments/route.js
 import { NextResponse } from "next/server";
 import prisma from "../../../lib/db";
+import { cookies } from "next/headers";
+import jwt from "jsonwebtoken";
 
 export async function POST(req) {
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
+
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    let userId;
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      userId = decoded.id;
+    } catch (err) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    // Find patient profile
+    const patient = await prisma.patient.findUnique({
+      where: { userId },
+    });
+
+    if (!patient) {
+      return NextResponse.json({ error: "Patient profile not found" }, { status: 404 });
+    }
+
     const data = await req.json();
     const {
-      patientId,
       doctorId,
       email,
       phone,
@@ -18,11 +42,11 @@ export async function POST(req) {
 
     const appointment = await prisma.appointment.create({
       data: {
-        patientId,
+        patientId: patient.id,
         doctorId,
-        email,
-        phone,
-        appointmentDate,
+        email: email || patient.user?.email, // Fallback to user email if not provided
+        phone: phone || patient.phone,
+        appointmentDate: new Date(appointmentDate), // Ensure Date object
         time,
         reason,
         city,

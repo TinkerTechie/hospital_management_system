@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -29,6 +30,7 @@ export default function AdminSidebar({ userName = "Admin", profilePic, dark, tog
         // Fetch user from localStorage
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setCurrentUser(JSON.parse(storedUser));
         }
 

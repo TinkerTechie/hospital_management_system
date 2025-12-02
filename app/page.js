@@ -481,7 +481,7 @@ export default function Home() {
                     </div>
                   </div>
                   <p className="text-gray-600 leading-relaxed italic relative z-10">
-                    "{rev.comment || "Great experience at Medicare Hospital!"}"
+                    &quot;{rev.comment || "Great experience at Medicare Hospital!"}&quot;
                   </p>
                   <p className="text-xs text-gray-400 mt-4 font-medium">
                     {new Date(rev.createdAt).toLocaleDateString()}
