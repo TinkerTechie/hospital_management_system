@@ -9,6 +9,7 @@ import Pagination from "../../../components/shared/Pagination";
 import StatusBadge from "../../../components/shared/StatusBadge";
 import { Plus, Download, Upload, MoreVertical, Eye, Edit, Trash2 } from "lucide-react";
 import Link from "next/link";
+import Swal from "sweetalert2";
 
 export default function PatientsListPage() {
     const [dark, setDark] = useState(false);
@@ -64,6 +65,36 @@ export default function PatientsListPage() {
             setPatients([]);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        const result = await Swal.fire({
+            title: "Are you sure?",
+            text: "You won't be able to revert this!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
+            confirmButtonText: "Yes, delete it!",
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const res = await fetch(`/api/admin/patients?id=${id}`, {
+                    method: "DELETE",
+                });
+
+                if (res.ok) {
+                    Swal.fire("Deleted!", "Patient has been deleted.", "success");
+                    fetchPatients();
+                } else {
+                    Swal.fire("Error!", "Failed to delete patient.", "error");
+                }
+            } catch (error) {
+                console.error("Error deleting patient:", error);
+                Swal.fire("Error!", "Something went wrong.", "error");
+            }
         }
     };
 
@@ -159,6 +190,7 @@ export default function PatientsListPage() {
                         <Edit className="h-4 w-4" />
                     </Link>
                     <button
+                        onClick={() => handleDelete(row.id)}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                         title="Delete"
                     >

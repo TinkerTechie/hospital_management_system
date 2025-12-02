@@ -9,6 +9,7 @@ import Pagination from "../../../components/shared/Pagination";
 import StatusBadge from "../../../components/shared/StatusBadge";
 import { Plus, Eye, Edit, Trash2, Grid, List } from "lucide-react";
 import Link from "next/link";
+import Swal from "sweetalert2";
 
 export default function DoctorsListPage() {
     const [dark, setDark] = useState(false);
@@ -61,6 +62,36 @@ export default function DoctorsListPage() {
             setDoctors([]);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        const result = await Swal.fire({
+            title: "Are you sure?",
+            text: "You won't be able to revert this!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
+            confirmButtonText: "Yes, delete it!",
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const res = await fetch(`/api/admin/doctors?id=${id}`, {
+                    method: "DELETE",
+                });
+
+                if (res.ok) {
+                    Swal.fire("Deleted!", "Doctor has been deleted.", "success");
+                    fetchDoctors();
+                } else {
+                    Swal.fire("Error!", "Failed to delete doctor.", "error");
+                }
+            } catch (error) {
+                console.error("Error deleting doctor:", error);
+                Swal.fire("Error!", "Something went wrong.", "error");
+            }
         }
     };
 
@@ -158,6 +189,7 @@ export default function DoctorsListPage() {
                         <Edit className="h-4 w-4" />
                     </Link>
                     <button
+                        onClick={() => handleDelete(row.id)}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                         title="Delete"
                     >
@@ -192,8 +224,8 @@ export default function DoctorsListPage() {
                                 <button
                                     onClick={() => setViewMode("table")}
                                     className={`p-2 rounded-lg transition-colors ${viewMode === "table"
-                                            ? "bg-teal-600 text-white"
-                                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                        ? "bg-teal-600 text-white"
+                                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                                         }`}
                                 >
                                     <List className="h-4 w-4" />
@@ -201,8 +233,8 @@ export default function DoctorsListPage() {
                                 <button
                                     onClick={() => setViewMode("grid")}
                                     className={`p-2 rounded-lg transition-colors ${viewMode === "grid"
-                                            ? "bg-teal-600 text-white"
-                                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                        ? "bg-teal-600 text-white"
+                                        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                                         }`}
                                 >
                                     <Grid className="h-4 w-4" />

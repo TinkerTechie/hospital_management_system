@@ -174,3 +174,55 @@ export async function PUT(request) {
         );
     }
 }
+
+export async function DELETE(request) {
+    try {
+        const cookieStore = cookies();
+        const token = cookieStore.get("token");
+
+        if (!token) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        let userRole;
+        try {
+            const decoded = jwt.verify(token.value, process.env.JWT_SECRET);
+            userRole = decoded.role;
+        } catch (err) {
+            return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+        }
+
+        if (userRole !== "ADMIN") {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get("id");
+
+        if (!id) {
+            return NextResponse.json({ error: "Patient ID is required" }, { status: 400 });
+        }
+
+        // Check if patient exists
+        const patient = await prisma.patient.findUnique({
+            where: { id: parseInt(id) },
+        });
+
+        if (!patient) {
+            return NextResponse.json({ error: "Patient not found" }, { status: 404 });
+        }
+
+        // Delete patient
+        await prisma.patient.delete({
+            where: { id: parseInt(id) },
+        });
+
+        return NextResponse.json({ message: "Patient deleted successfully" }, { status: 200 });
+    } catch (error) {
+        console.error("Error deleting patient:", error);
+        return NextResponse.json(
+            { error: "Failed to delete patient" },
+            { status: 500 }
+        );
+    }
+}
