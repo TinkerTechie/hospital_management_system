@@ -235,6 +235,10 @@ model Appointment {
   city            String?
   email           String?
   phone           String?
+  
+  status          String   @default("scheduled") // scheduled, completed, cancelled
+  type            String   @default("Consultation") // Consultation, Follow-up, Emergency
+  serviceType     String?  // General Consultation, etc.
 
   createdAt DateTime @default(now())
 }

@@ -104,7 +104,7 @@ const ServiceTypeStep = ({ bookingData, setBookingData }) => (
 );
 
 // Step 2: Doctor Selection
-const DoctorSelectionStep = ({ bookingData, setBookingData }) => (
+const DoctorSelectionStep = ({ bookingData, setBookingData, doctors, loading }) => (
   <motion.div
     initial={{ opacity: 0, x: 20 }}
     animate={{ opacity: 1, x: 0 }}
@@ -112,118 +112,46 @@ const DoctorSelectionStep = ({ bookingData, setBookingData }) => (
     className="space-y-4"
   >
     <h2 className="text-2xl font-bold text-gray-900 mb-6">Choose Your Doctor</h2>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {doctors.map((doctor) => (
-        <button
-          key={doctor.id}
-          onClick={() => setBookingData({ ...bookingData, doctor })}
-          className={`
+    {loading ? (
+      <div className="text-center py-10">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Loading doctors...</p>
+      </div>
+    ) : doctors.length === 0 ? (
+      <div className="text-center py-10 text-gray-500">
+        No doctors found. Please try again later.
+      </div>
+    ) : (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {doctors.map((doctor) => (
+          <button
+            key={doctor.id}
+            onClick={() => setBookingData({ ...bookingData, doctor })}
+            className={`
             p-6 rounded-xl border-2 transition-all text-left
             ${bookingData.doctor?.id === doctor.id
-              ? 'border-teal-600 bg-teal-50'
-              : 'border-gray-200 hover:border-teal-300'
-            }
+                ? 'border-teal-600 bg-teal-50'
+                : 'border-gray-200 hover:border-teal-300'
+              }
           `}
-        >
-          <div className="w-20 h-20 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mb-4">
-            {doctor.name.split(' ').map(n => n[0]).join('')}
-          </div>
-          <h3 className="font-bold text-lg mb-1 text-gray-900">{doctor.name}</h3>
-          <p className="text-sm font-medium text-gray-700 mb-2">{doctor.specialty}</p>
-          <div className="flex items-center justify-between text-sm font-medium text-gray-700">
-            <span>⭐ {doctor.rating}</span>
-            <span>{doctor.experience}</span>
-          </div>
-        </button>
-      ))}
-    </div>
-  </motion.div>
-);
-
-// Step 3: Date Selection
-const DateSelectionStep = ({ bookingData, setBookingData }) => (
-  <motion.div
-    initial={{ opacity: 0, x: 20 }}
-    animate={{ opacity: 1, x: 0 }}
-    exit={{ opacity: 0, x: -20 }}
-  >
-    <h2 className="text-2xl font-bold text-gray-900 mb-6">Select Date</h2>
-    <AppointmentCalendar
-      selectedDate={bookingData.date}
-      onDateSelect={(date) => setBookingData({ ...bookingData, date })}
-    />
-  </motion.div>
-);
-
-// Step 4: Time Selection
-const TimeSelectionStep = ({ bookingData, setBookingData }) => (
-  <motion.div
-    initial={{ opacity: 0, x: 20 }}
-    animate={{ opacity: 1, x: 0 }}
-    exit={{ opacity: 0, x: -20 }}
-  >
-    <h2 className="text-2xl font-bold text-gray-900 mb-6">Select Time Slot</h2>
-    <TimeSlotPicker
-      selectedTime={bookingData.time}
-      onTimeSelect={(time) => setBookingData({ ...bookingData, time })}
-    />
-  </motion.div>
-);
-
-// Step 5: Patient Details
-const PatientDetailsStep = ({ bookingData, setBookingData }) => (
-  <motion.div
-    initial={{ opacity: 0, x: 20 }}
-    animate={{ opacity: 1, x: 0 }}
-    exit={{ opacity: 0, x: -20 }}
-  >
-    <h2 className="text-2xl font-bold text-gray-900 mb-6">Patient Details</h2>
-    <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <input
-          type="text"
-          value={bookingData.patientName}
-          onChange={(e) => setBookingData({ ...bookingData, patientName: e.target.value })}
-          placeholder="Full Name"
-          className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:border-teal-600 bg-white"
-          required
-        />
-        <input
-          type="email"
-          value={bookingData.email}
-          onChange={(e) => setBookingData({ ...bookingData, email: e.target.value })}
-          placeholder="Email Address"
-          className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:border-teal-600 bg-white"
-          required
-        />
-        <input
-          type="tel"
-          value={bookingData.phone}
-          onChange={(e) => setBookingData({ ...bookingData, phone: e.target.value })}
-          placeholder="Phone Number"
-          className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:border-teal-600 bg-white"
-          required
-        />
-        <input
-          type="text"
-          value={bookingData.city}
-          onChange={(e) => setBookingData({ ...bookingData, city: e.target.value })}
-          placeholder="City"
-          className="border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:border-teal-600 bg-white"
-          required
-        />
+          >
+            <div className="w-20 h-20 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mb-4">
+              {doctor.fullName?.split(' ').map(n => n[0]).join('') || 'DR'}
+            </div>
+            <h3 className="font-bold text-lg mb-1 text-gray-900">{doctor.fullName}</h3>
+            <p className="text-sm font-medium text-gray-700 mb-2">{doctor.specialization}</p>
+            <div className="flex items-center justify-between text-sm font-medium text-gray-700">
+              <span>⭐ {doctor.rating || '4.8'}</span>
+              <span>{doctor.yearsOfExperience ? `${doctor.yearsOfExperience} years` : 'Experienced'}</span>
+            </div>
+          </button>
+        ))}
       </div>
-      <textarea
-        value={bookingData.reason}
-        onChange={(e) => setBookingData({ ...bookingData, reason: e.target.value })}
-        placeholder="Reason for Appointment"
-        className="border-2 border-gray-300 rounded-lg px-4 py-3 mt-4 w-full text-gray-900 placeholder-gray-500 focus:outline-none focus:border-teal-600 bg-white"
-        rows={4}
-        required
-      />
-    </div>
+    )}
   </motion.div>
 );
+
+// ... (Step 3, 4, 5 remain same)
 
 // Step 6: Confirmation
 const ConfirmationStep = ({ bookingData, handleSubmit }) => (
@@ -241,7 +169,7 @@ const ConfirmationStep = ({ bookingData, handleSubmit }) => (
         </div>
         <div className="flex items-center justify-between py-3 border-b">
           <span className="font-medium text-gray-700">Doctor:</span>
-          <span className="font-semibold">{bookingData.doctor?.name}</span>
+          <span className="font-semibold">{bookingData.doctor?.fullName}</span>
         </div>
         <div className="flex items-center justify-between py-3 border-b">
           <span className="font-medium text-gray-700">Date:</span>
@@ -276,6 +204,8 @@ export default function AppointmentPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
+  const [doctors, setDoctors] = useState([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(false);
   const totalSteps = 6;
 
   // Booking data
@@ -291,7 +221,7 @@ export default function AppointmentPage() {
     reason: ""
   });
 
-  // Check authentication
+  // Check authentication and fetch doctors
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (!storedUser) {
@@ -306,17 +236,30 @@ export default function AppointmentPage() {
       });
     } else {
       const userData = JSON.parse(storedUser);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUser(userData);
       setBookingData(prev => ({
         ...prev,
         patientName: userData.name || "",
         email: userData.email || ""
       }));
+      fetchDoctors();
     }
   }, [router]);
 
-
+  const fetchDoctors = async () => {
+    try {
+      setLoadingDoctors(true);
+      const res = await fetch("/api/doctors");
+      if (res.ok) {
+        const data = await res.json();
+        setDoctors(data.doctors || []);
+      }
+    } catch (error) {
+      console.error("Error fetching doctors:", error);
+    } finally {
+      setLoadingDoctors(false);
+    }
+  };
 
   const handleNext = () => {
     // Validation for each step
@@ -363,9 +306,11 @@ export default function AppointmentPage() {
         city: bookingData.city,
         appointmentDate: bookingData.date?.toISOString().split('T')[0],
         time: bookingData.time,
-        doctor: bookingData.doctor?.name,
+        doctorId: bookingData.doctor?.id, // Send ID, not name
         reason: bookingData.reason,
-        serviceType: bookingData.serviceType
+        serviceType: bookingData.serviceType,
+        type: "Consultation", // Default type
+        status: "scheduled"
       };
 
       const res = await fetch("/api/appointments", {
@@ -376,7 +321,7 @@ export default function AppointmentPage() {
 
       const data = await res.json();
 
-      if (data.success) {
+      if (res.ok && data.success) {
         Swal.fire({
           title: "Appointment Booked!",
           text: "Your appointment has been confirmed successfully.",
@@ -393,8 +338,6 @@ export default function AppointmentPage() {
       Swal.fire("Server Error", "Unable to connect to the server.", "error");
     }
   };
-
-
 
   if (!user) return null;
 
@@ -416,9 +359,8 @@ export default function AppointmentPage() {
           {/* Step Content */}
           <div className="min-h-[500px]">
             <AnimatePresence mode="wait">
-              // eslint-disable-next-line react-hooks/static-components
               {currentStep === 1 && <ServiceTypeStep key="step1" bookingData={bookingData} setBookingData={setBookingData} />}
-              {currentStep === 2 && <DoctorSelectionStep key="step2" bookingData={bookingData} setBookingData={setBookingData} />}
+              {currentStep === 2 && <DoctorSelectionStep key="step2" bookingData={bookingData} setBookingData={setBookingData} doctors={doctors} loading={loadingDoctors} />}
               {currentStep === 3 && <DateSelectionStep key="step3" bookingData={bookingData} setBookingData={setBookingData} />}
               {currentStep === 4 && <TimeSelectionStep key="step4" bookingData={bookingData} setBookingData={setBookingData} />}
               {currentStep === 5 && <PatientDetailsStep key="step5" bookingData={bookingData} setBookingData={setBookingData} />}

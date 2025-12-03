@@ -38,6 +38,9 @@ export async function POST(req) {
       time,
       reason,
       city,
+      serviceType,
+      status,
+      type,
     } = data;
 
     const appointment = await prisma.appointment.create({
@@ -50,6 +53,9 @@ export async function POST(req) {
         time,
         reason,
         city,
+        serviceType,
+        status: status || "scheduled",
+        type: type || "Consultation",
       },
     });
 
