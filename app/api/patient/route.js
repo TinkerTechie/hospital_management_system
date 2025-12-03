@@ -76,15 +76,116 @@ export async function GET(req) {
       orderBy: { date: "desc" },
     });
 
+    // Fetch latest vitals
+    const vitals = await prisma.vitals.findMany({
+      where: { patientId: patient.id },
+      orderBy: { createdAt: "desc" },
+      take: 1, // Get only the most recent vitals
+    });
+
     return NextResponse.json({
       appointments,
       prescriptions,
       medicalRecords,
+      vitals: vitals[0] || null, // Return the latest vitals or null
       user: user,
       patientProfile: patient,
     });
   } catch (error) {
     console.error("Error fetching patient dashboard data:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
+
+export async function PUT(req) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
+
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    let userId;
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      userId = decoded.id;
+    } catch (err) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { name, email, phone, address, bloodGroup, insuranceProvider, medicalHistory, dob } = body;
+
+    // Get current user to check if email is changing
+    const currentUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    // Only update email if it's different from current email
+    const updateData = { name };
+    if (email && email !== currentUser.email) {
+      // Check if new email already exists
+      const existingUser = await prisma.user.findUnique({
+        where: { email },
+      });
+      if (existingUser && existingUser.id !== userId) {
+        return NextResponse.json(
+          { error: "Email already in use" },
+          { status: 400 }
+        );
+      }
+      updateData.email = email;
+    }
+
+    // Update User model
+    await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    // Update Patient model
+    // We use upsert to create if it doesn't exist (though it should for a patient user)
+    // Calculate age if DOB is provided
+    let age = undefined;
+    if (dob) {
+      const birthDate = new Date(dob);
+      const today = new Date();
+      age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+    }
+
+    const updatedPatient = await prisma.patient.upsert({
+      where: { userId: userId },
+      update: {
+        fullName: name,
+        bloodGroup,
+        medicalHistory,
+        phone,
+        address,
+        dob: dob ? new Date(dob) : undefined,
+        insuranceProvider,
+        age,
+      },
+      create: {
+        userId,
+        fullName: name,
+        bloodGroup,
+        medicalHistory,
+        phone,
+        address,
+        dob: dob ? new Date(dob) : undefined,
+        insuranceProvider,
+        age,
+      },
+    });
+
+    return NextResponse.json({ success: true, patient: updatedPatient });
+  } catch (error) {
+    console.error("Error updating patient profile:", error);
+    return NextResponse.json({ error: "Failed to update profile" }, { status: 500 });
   }
 }

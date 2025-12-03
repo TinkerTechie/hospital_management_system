@@ -31,6 +31,29 @@ export default function DoctorDashboardPage() {
   const [showUpdateForm, setShowUpdateForm] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
 
+  async function fetchData() {
+    try {
+      const res = await fetch("/api/doctor");
+      if (res.status === 401 || res.status === 404) {
+        window.location.href = "/auth"; // Redirect to custom login page
+        return;
+      }
+      if (!res.ok) throw new Error("Failed to fetch data");
+
+      const data = await res.json();
+      setUser(data.user);
+      setDoctorProfile(data.doctorProfile);
+      setStats(data.stats);
+      setAppointments(data.appointments || []);
+      setRecentPatients(data.recentPatients || []);
+    } catch (e) {
+      console.error(e);
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
     // Theme check
     if (typeof window !== "undefined") {
@@ -48,29 +71,6 @@ export default function DoctorDashboardPage() {
             userData.role === "PATIENT" ? "/dashboard/patient" : "/auth";
         window.location.href = correctDashboard;
         return;
-      }
-    }
-
-    async function fetchData() {
-      try {
-        const res = await fetch("/api/doctor");
-        if (res.status === 401 || res.status === 404) {
-          window.location.href = "/auth"; // Redirect to custom login page
-          return;
-        }
-        if (!res.ok) throw new Error("Failed to fetch data");
-
-        const data = await res.json();
-        setUser(data.user);
-        setDoctorProfile(data.doctorProfile);
-        setStats(data.stats);
-        setAppointments(data.appointments || []);
-        setRecentPatients(data.recentPatients || []);
-      } catch (e) {
-        console.error(e);
-        setError(e.message);
-      } finally {
-        setLoading(false);
       }
     }
 

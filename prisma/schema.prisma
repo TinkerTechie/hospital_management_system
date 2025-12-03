@@ -129,10 +129,18 @@ model Patient {
 
   fullName       String
   age            Int?
+  gender         String?
+  dob            DateTime?
+  phone          String?
+  address        String?
   bloodGroup     String?
+  insuranceProvider String?
 
   medicalHistory String?
   assignedWard   String? // e.g., "ICU", "Emergency", "General Ward"
+
+  emergencyContactName   String?
+  emergencyContactNumber String?
 
   doctorId String?
   doctor   Doctor? @relation(fields: [doctorId], references: [id])

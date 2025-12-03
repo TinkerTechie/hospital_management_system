@@ -10,6 +10,9 @@ export default function DoctorPatientsPage() {
     const [patients, setPatients] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [newPatient, setNewPatient] = useState({ name: "", age: "", email: "", condition: "" });
+    const [creating, setCreating] = useState(false);
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -30,6 +33,33 @@ export default function DoctorPatientsPage() {
             console.error("Error fetching patients:", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleCreatePatient = async (e) => {
+        e.preventDefault();
+        setCreating(true);
+        try {
+            const res = await fetch('/api/doctor/patients', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newPatient)
+            });
+
+            if (res.ok) {
+                alert("Patient added successfully!");
+                setShowAddModal(false);
+                setNewPatient({ name: "", age: "", email: "", condition: "" });
+                fetchPatients(); // Refresh list
+            } else {
+                const data = await res.json();
+                alert(data.error || "Failed to add patient");
+            }
+        } catch (error) {
+            console.error("Error adding patient:", error);
+            alert("An error occurred");
+        } finally {
+            setCreating(false);
         }
     };
 
@@ -60,7 +90,7 @@ export default function DoctorPatientsPage() {
                     <DoctorDashboardSidebar dark={dark} />
                 </div>
 
-                <main className="flex-1 p-6 md:p-10 max-w-7xl mx-auto overflow-y-auto">
+                <main className="flex-1 p-6 md:p-10 max-w-7xl mx-auto overflow-y-auto relative">
                     <motion.header
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -72,7 +102,10 @@ export default function DoctorPatientsPage() {
                                 Total <span className="font-semibold text-teal-600 dark:text-teal-400">{patients.length}</span> active patients under your care.
                             </p>
                         </div>
-                        <button className="px-6 py-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-teal-500/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0">
+                        <button
+                            onClick={() => setShowAddModal(true)}
+                            className="px-6 py-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-teal-500/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                        >
                             + Add New Patient
                         </button>
                     </motion.header>
@@ -161,8 +194,8 @@ export default function DoctorPatientsPage() {
 
                                     <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
                                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${patient.condition === "No records"
-                                                ? "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
-                                                : "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
+                                            ? "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                                            : "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
                                             }`}>
                                             {patient.condition === "No records" ? "New Patient" : "Active"}
                                         </span>
@@ -173,6 +206,89 @@ export default function DoctorPatientsPage() {
                                 </motion.div>
                             ))}
                         </motion.div>
+                    )}
+
+                    {/* Add Patient Modal */}
+                    {showAddModal && (
+                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+                            >
+                                <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Add New Patient</h2>
+                                    <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    </button>
+                                </div>
+                                <form onSubmit={handleCreatePatient} className="p-6 space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={newPatient.name}
+                                            onChange={(e) => setNewPatient({ ...newPatient, name: e.target.value })}
+                                            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
+                                            placeholder="John Doe"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Age</label>
+                                            <input
+                                                type="number"
+                                                required
+                                                value={newPatient.age}
+                                                onChange={(e) => setNewPatient({ ...newPatient, age: e.target.value })}
+                                                className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
+                                                placeholder="30"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email (Optional)</label>
+                                            <input
+                                                type="email"
+                                                value={newPatient.email}
+                                                onChange={(e) => setNewPatient({ ...newPatient, email: e.target.value })}
+                                                className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
+                                                placeholder="john@example.com"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Initial Condition/Diagnosis</label>
+                                        <textarea
+                                            value={newPatient.condition}
+                                            onChange={(e) => setNewPatient({ ...newPatient, condition: e.target.value })}
+                                            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all h-24 resize-none"
+                                            placeholder="Brief description of the patient's condition..."
+                                        />
+                                    </div>
+                                    <div className="pt-4 flex gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAddModal(false)}
+                                            className="flex-1 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={creating}
+                                            className="flex-1 px-4 py-2 rounded-xl bg-teal-600 text-white hover:bg-teal-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
+                                        >
+                                            {creating ? (
+                                                <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                            ) : (
+                                                "Add Patient"
+                                            )}
+                                        </button>
+                                    </div>
+                                </form>
+                            </motion.div>
+                        </div>
                     )}
                 </main>
             </div>

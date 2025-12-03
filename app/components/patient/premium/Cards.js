@@ -11,8 +11,8 @@ export function AppointmentCard({ appt }) {
             className="flex items-center p-4 bg-gray-50/50 dark:bg-gray-700/30 rounded-2xl border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-sky-100 dark:hover:border-sky-900/30 transition-all duration-200 cursor-pointer group"
         >
             <div className="h-14 w-14 rounded-2xl bg-sky-100 dark:bg-sky-900/30 flex flex-col items-center justify-center text-sky-600 dark:text-sky-400 font-bold mr-4 group-hover:bg-sky-600 group-hover:text-white transition-colors duration-300 shadow-sm">
-                <span className="text-lg leading-none">{new Date(appt.date).getDate()}</span>
-                <span className="text-[10px] uppercase font-medium opacity-80">{new Date(appt.date).toLocaleString('default', { month: 'short' })}</span>
+                <span className="text-lg leading-none">{new Date(appt.appointmentDate || appt.date || new Date()).getDate()}</span>
+                <span className="text-[10px] uppercase font-medium opacity-80">{new Date(appt.appointmentDate || appt.date || new Date()).toLocaleString('default', { month: 'short' })}</span>
             </div>
 
             <div className="flex-1 min-w-0">

@@ -52,6 +52,22 @@ export async function POST(request, { params }) {
             },
         });
 
+        // Create notification for the patient
+        try {
+            await prisma.notification.create({
+                data: {
+                    userId: patient.userId,
+                    title: "Vital Signs Updated",
+                    message: `Your vital signs have been recorded: HR ${data.heartRate || 'N/A'} BPM, BP ${data.bpSystolic || 'N/A'}/${data.bpDiastolic || 'N/A'} mmHg, Temp ${data.temperature || 'N/A'}°F, O2 ${data.oxygenSaturation || 'N/A'}%`,
+                    type: "INFO",
+                    link: "/dashboard/patient/records",
+                },
+            });
+        } catch (notifError) {
+            console.error("Error creating notification:", notifError);
+            // Don't fail the whole request if notification fails
+        }
+
         return NextResponse.json({ vitals }, { status: 201 });
     } catch (error) {
         console.error("Error creating vitals:", error);

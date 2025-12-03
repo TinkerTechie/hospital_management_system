@@ -11,6 +11,8 @@ import {
   ArrowRight,
   Star,
   MessageSquare,
+  Heart,
+  Thermometer,
 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -26,6 +28,7 @@ import { AppointmentCard, PrescriptionCard, RecordRow } from "../../components/p
 import QuickActions from "../../components/patient/premium/QuickActions";
 import PatientUpdatesFeed from "../../components/patient/premium/PatientUpdatesFeed";
 import ReviewModal from "../../components/patient/premium/ReviewModal";
+import GlobalSearch from "../../components/GlobalSearch";
 
 // Fallback image
 const profilePic = "https://placehold.co/120x120.png?text=P";
@@ -37,9 +40,23 @@ export default function PatientDashboard() {
   const [prescriptions, setPrescriptions] = useState([]);
   const [medicalRecords, setMedicalRecords] = useState([]);
   const [patientUpdates, setPatientUpdates] = useState([]);
+  const [vitals, setVitals] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+
+  useEffect(() => {
+    // Keyboard shortcut for search (Cmd/Ctrl + K)
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setShowSearch(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   useEffect(() => {
     // Role-based access control
@@ -71,6 +88,7 @@ export default function PatientDashboard() {
         setAppointments(data.appointments || []);
         setPrescriptions(data.prescriptions || []);
         setMedicalRecords(data.medicalRecords || []);
+        setVitals(data.vitals || null);
 
         // Fetch patient updates
         const updatesRes = await fetch("/api/patient-updates?limit=5");
@@ -118,7 +136,7 @@ export default function PatientDashboard() {
   return (
     <div className="min-h-screen font-sans text-gray-900 bg-[#F9FAFB]">
 
-      <DashboardNavbar user={user} handleLogout={handleLogout} />
+      <DashboardNavbar user={user} handleLogout={handleLogout} onSearchClick={() => setShowSearch(true)} />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
 
@@ -182,10 +200,10 @@ export default function PatientDashboard() {
             <StatCard
               icon={<Activity className="h-6 w-6" />}
               label="Vitals"
-              value="Normal"
-              sub="Last checkup"
+              value={vitals ? `${vitals.heartRate || 'N/A'} BPM` : "No data"}
+              sub={vitals ? `BP: ${vitals.bpSystolic || 'N/A'}/${vitals.bpDiastolic || 'N/A'}` : "Not recorded"}
               color="bg-blue-600"
-              trend={2}
+              trend={vitals ? 0 : null}
             />
             <StatCard
               icon={<FileText className="h-6 w-6" />}
@@ -195,6 +213,48 @@ export default function PatientDashboard() {
               color="bg-indigo-600"
             />
           </motion.div>
+
+          {/* Vitals Detail Card - Show when vitals are available */}
+          {vitals && (
+            <motion.div variants={itemVariants} className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl shadow-md p-6 border border-blue-100">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-blue-600" /> Latest Vital Signs
+                </h3>
+                <span className="text-xs text-gray-500">
+                  {new Date(vitals.createdAt).toLocaleString()}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="bg-white rounded-xl p-4 text-center">
+                  <Heart className="h-5 w-5 text-rose-500 mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-gray-800">{vitals.heartRate || 'N/A'}</p>
+                  <p className="text-xs text-gray-500">BPM</p>
+                </div>
+                <div className="bg-white rounded-xl p-4 text-center">
+                  <Activity className="h-5 w-5 text-blue-500 mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-gray-800">{vitals.bpSystolic || 'N/A'}/{vitals.bpDiastolic || 'N/A'}</p>
+                  <p className="text-xs text-gray-500">mmHg</p>
+                </div>
+                <div className="bg-white rounded-xl p-4 text-center">
+                  <Thermometer className="h-5 w-5 text-orange-500 mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-gray-800">{vitals.temperature?.toFixed(1) || 'N/A'}°</p>
+                  <p className="text-xs text-gray-500">Fahrenheit</p>
+                </div>
+                <div className="bg-white rounded-xl p-4 text-center">
+                  <Activity className="h-5 w-5 text-green-500 mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-gray-800">{vitals.oxygenSaturation || 'N/A'}%</p>
+                  <p className="text-xs text-gray-500">O2 Sat</p>
+                </div>
+                <div className="bg-white rounded-xl p-4 text-center">
+                  <Activity className="h-5 w-5 text-purple-500 mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-gray-800">{vitals.respiratoryRate || 'N/A'}</p>
+                  <p className="text-xs text-gray-500">Breaths/min</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
@@ -286,16 +346,6 @@ export default function PatientDashboard() {
             </div>
           </div>
 
-          {/* Review Modal */}
-          <ReviewModal
-            isOpen={showReviewModal}
-            onClose={() => setShowReviewModal(false)}
-            onSubmit={(review) => {
-              console.log("Review submitted:", review);
-              // Optionally refresh data or show success message
-            }}
-          />
-
         </motion.div>
       </main>
 
@@ -303,6 +353,17 @@ export default function PatientDashboard() {
 
       {/* Sticky Emergency Button */}
       <EmergencyButton />
+
+      {/* Global Search Modal */}
+      <GlobalSearch isOpen={showSearch} onClose={() => setShowSearch(false)} />
+
+      {/* Review Modal */}
+      {showReviewModal && (
+        <ReviewModal
+          isOpen={showReviewModal}
+          onClose={() => setShowReviewModal(false)}
+        />
+      )}
 
     </div>
   );

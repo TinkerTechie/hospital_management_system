@@ -53,8 +53,10 @@ export async function PATCH(req, { params }) {
         });
     } catch (error) {
         console.error("Error updating notification:", error);
+        // Log the ID and body for debugging
+        console.error("Notification ID:", params.id);
         return NextResponse.json(
-            { error: "Failed to update notification" },
+            { error: "Failed to update notification", details: error.message },
             { status: 500 }
         );
     }

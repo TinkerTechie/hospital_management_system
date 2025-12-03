@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { useState } from "react";
-import { Menu, X, Bell, User, LogOut } from "lucide-react";
+import { Menu, X, Bell, User, LogOut, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import NotificationCenter from "./NotificationCenter";
 
-export default function DashboardNavbar({ user, handleLogout }) {
+export default function DashboardNavbar({ user, handleLogout, onSearchClick }) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     return (
@@ -30,6 +30,14 @@ export default function DashboardNavbar({ user, handleLogout }) {
                     <div className="h-6 w-px bg-teal-500 mx-2"></div>
 
                     <div className="flex items-center gap-4">
+                        <button
+                            onClick={onSearchClick}
+                            className="p-2 text-white hover:text-teal-200 hover:bg-teal-700 rounded-lg transition-colors"
+                            title="Search (Ctrl+K)"
+                        >
+                            <Search className="h-5 w-5" />
+                        </button>
+
                         <NotificationCenter />
 
                         <div className="flex items-center gap-2">
