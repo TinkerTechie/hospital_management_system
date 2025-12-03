@@ -1,4 +1,5 @@
-"use client"
+"use client";
+
 import EmergencySpecialtyTemplate from '../../components/EmergencySpecialtyTemplate';
 
 const burnData = {
