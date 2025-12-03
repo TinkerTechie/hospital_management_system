@@ -27,7 +27,17 @@ export default function BillingListPage() {
             setDark(theme === "dark");
         }
         fetchInvoices();
-    }, [currentPage, itemsPerPage, searchQuery, filters, sortColumn, sortDirection]);
+    }, [currentPage, itemsPerPage, sortColumn, sortDirection]);
+
+    // Reset to page 1 when search or filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, filters]);
+
+    // Fetch when page resets
+    useEffect(() => {
+        fetchInvoices();
+    }, [currentPage]);
 
     const toggleDark = () => {
         const newTheme = !dark;
@@ -101,7 +111,7 @@ export default function BillingListPage() {
             label: "Patient",
             render: (row) => (
                 <div>
-                    <p className="font-medium text-gray-900 dark:text-white">{row.patient?.name || "N/A"}</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{row.patient?.fullName || "N/A"}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{row.patient?.phone}</p>
                 </div>
             ),

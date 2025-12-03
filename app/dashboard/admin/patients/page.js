@@ -28,7 +28,17 @@ export default function PatientsListPage() {
             setDark(theme === "dark");
         }
         fetchPatients();
-    }, [currentPage, itemsPerPage, searchQuery, filters, sortColumn, sortDirection]);
+    }, [currentPage, itemsPerPage, sortColumn, sortDirection]);
+
+    // Reset to page 1 when search or filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, filters]);
+
+    // Fetch when page resets
+    useEffect(() => {
+        fetchPatients();
+    }, [currentPage]);
 
     const toggleDark = () => {
         const newTheme = !dark;

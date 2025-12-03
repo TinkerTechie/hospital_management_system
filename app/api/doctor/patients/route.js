@@ -81,8 +81,24 @@ export async function GET(req) {
         }));
 
         // To get email, I need to include user
+        const { searchParams } = new URL(req.url);
+        const search = searchParams.get("search") || "";
+
+        // Build where clause
+        const where = {
+            doctorId: doctor.id,
+            ...(search ? {
+                OR: [
+                    { fullName: { contains: search, mode: "insensitive" } },
+                    { medicalHistory: { contains: search, mode: "insensitive" } },
+                    // Search by user email if possible, but user is a relation.
+                    { user: { email: { contains: search, mode: "insensitive" } } }
+                ]
+            } : {})
+        };
+
         const patientsWithUser = await prisma.patient.findMany({
-            where: { doctorId: doctor.id },
+            where,
             include: {
                 user: {
                     select: { email: true, image: true }

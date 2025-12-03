@@ -265,9 +265,23 @@ export async function DELETE(request) {
             return NextResponse.json({ error: "Patient not found" }, { status: 404 });
         }
 
-        // Delete patient
-        await prisma.patient.delete({
-            where: { id },
+        // Delete patient and all related records in a transaction
+        await prisma.$transaction(async (tx) => {
+            // Delete related records first
+            await tx.appointment.deleteMany({ where: { patientId: id } });
+            await tx.prescription.deleteMany({ where: { patientId: id } });
+            await tx.medicalRecord.deleteMany({ where: { patientId: id } });
+            await tx.patientUpdate.deleteMany({ where: { patientId: id } });
+            await tx.invoice.deleteMany({ where: { patientId: id } });
+            await tx.vitals.deleteMany({ where: { patientId: id } });
+
+            // Delete the patient
+            await tx.patient.delete({ where: { id } });
+
+            // Optionally delete the associated user account
+            if (patient.userId) {
+                await tx.user.delete({ where: { id: patient.userId } });
+            }
         });
 
         return NextResponse.json({ message: "Patient deleted successfully" }, { status: 200 });

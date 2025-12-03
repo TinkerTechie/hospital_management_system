@@ -31,18 +31,24 @@ export default function NursePatientsPage() {
     const [patients, setPatients] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    // Debounce search
     useEffect(() => {
-        if (typeof window !== "undefined") {
-            const theme = localStorage.getItem("theme");
-            setDark(theme === "dark");
-        }
-        fetchPatients();
-    }, []);
+        const timer = setTimeout(() => {
+            fetchPatients(searchQuery);
+        }, 500);
 
-    const fetchPatients = async () => {
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    const fetchPatients = async (query = "") => {
         try {
             setLoading(true);
-            const res = await fetch("/api/admin/patients?limit=100");
+            const params = new URLSearchParams({
+                limit: "100",
+                search: query
+            });
+
+            const res = await fetch(`/api/admin/patients?${params}`);
             if (!res.ok) throw new Error("Failed to fetch patients");
 
             const data = await res.json();
@@ -112,17 +118,8 @@ export default function NursePatientsPage() {
         }
     };
 
-    // Real-time search filtering
-    const filteredPatients = useMemo(() => {
-        if (!searchQuery) return patients;
-
-        return patients.filter(patient =>
-            patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            patient.bed.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            patient.diagnosis.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            patient.condition.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-    }, [searchQuery, patients]);
+    // Removed client-side filtering useMemo
+    const filteredPatients = patients;
 
     const getConditionColor = (condition) => {
         switch (condition) {

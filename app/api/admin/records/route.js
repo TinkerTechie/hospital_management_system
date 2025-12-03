@@ -60,14 +60,14 @@ export async function GET(request) {
                     patient: {
                         select: {
                             id: true,
-                            name: true,
+                            fullName: true,
                             phone: true,
                         },
                     },
                     doctor: {
                         select: {
                             id: true,
-                            name: true,
+                            fullName: true,
                         },
                     },
                 },
@@ -128,9 +128,11 @@ export async function POST(request) {
                 description: data.description,
                 type: data.type,
                 patientId: data.patientId,
-                doctorId: data.doctorId,
-                fileUrl: data.fileUrl,
-                tags: data.tags,
+                doctorId: data.doctorId || undefined, // Handle empty string
+                diagnosis: data.diagnosis,
+                treatment: data.treatment,
+                notes: data.notes,
+                attachments: data.fileUrl ? { url: data.fileUrl } : undefined, // Map fileUrl to attachments JSON
             },
             include: {
                 patient: true,

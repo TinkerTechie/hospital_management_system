@@ -6,6 +6,27 @@ import { Menu, X, Home, Info, Stethoscope, Phone, Calendar, ChevronDown, LogIn, 
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    }
+  }, []);
+
+  const getDashboardLink = () => {
+    if (!user) return "/auth";
+    switch (user.role) {
+      case "ADMIN": return "/dashboard/admin";
+      case "DOCTOR": return "/dashboard/doctor";
+      case "NURSE": return "/dashboard/nurse";
+      case "PATIENT": return "/dashboard/patient";
+      default: return "/dashboard/patient";
+    }
+  };
 
   return (
     <header className="bg-teal-600 text-white shadow-md sticky top-0 z-50">
@@ -36,18 +57,29 @@ export default function Navbar() {
           </Link>
 
           <div className="flex items-center gap-3 ml-4">
-            <Link
-              href="/auth"
-              className="bg-white text-teal-700 px-4 py-2 rounded-md hover:bg-teal-50 transition shadow-sm font-semibold flex items-center gap-1"
-            >
-              <LogIn size={16} /> Login
-            </Link>
-            <Link
-              href="/auth?mode=signup"
-              className="bg-yellow-400 text-black px-4 py-2 rounded-md hover:bg-yellow-300 transition shadow-sm font-semibold flex items-center gap-1"
-            >
-              <UserPlus size={16} /> Sign Up
-            </Link>
+            {user ? (
+              <Link
+                href={getDashboardLink()}
+                className="bg-white text-teal-700 px-4 py-2 rounded-md hover:bg-teal-50 transition shadow-sm font-semibold flex items-center gap-1"
+              >
+                <LogIn size={16} /> Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/auth"
+                  className="bg-white text-teal-700 px-4 py-2 rounded-md hover:bg-teal-50 transition shadow-sm font-semibold flex items-center gap-1"
+                >
+                  <LogIn size={16} /> Login
+                </Link>
+                <Link
+                  href="/auth?mode=signup"
+                  className="bg-yellow-400 text-black px-4 py-2 rounded-md hover:bg-yellow-300 transition shadow-sm font-semibold flex items-center gap-1"
+                >
+                  <UserPlus size={16} /> Sign Up
+                </Link>
+              </>
+            )}
           </div>
         </nav>
 
@@ -83,20 +115,32 @@ export default function Navbar() {
               <Phone size={18} /> Contact
             </Link>
             <div className="flex flex-col gap-2 mt-2">
-              <Link
-                href="/auth"
-                className="bg-white text-teal-700 px-3 py-2 rounded-md text-center flex items-center justify-center gap-2"
-                onClick={() => setIsOpen(false)}
-              >
-                <LogIn size={18} /> Login
-              </Link>
-              <Link
-                href="/auth?mode=signup"
-                className="bg-yellow-400 text-black px-3 py-2 rounded-md text-center flex items-center justify-center gap-2"
-                onClick={() => setIsOpen(false)}
-              >
-                <UserPlus size={18} /> Sign Up
-              </Link>
+              {user ? (
+                <Link
+                  href={getDashboardLink()}
+                  className="bg-white text-teal-700 px-3 py-2 rounded-md text-center flex items-center justify-center gap-2"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <LogIn size={18} /> Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/auth"
+                    className="bg-white text-teal-700 px-3 py-2 rounded-md text-center flex items-center justify-center gap-2"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <LogIn size={18} /> Login
+                  </Link>
+                  <Link
+                    href="/auth?mode=signup"
+                    className="bg-yellow-400 text-black px-3 py-2 rounded-md text-center flex items-center justify-center gap-2"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <UserPlus size={18} /> Sign Up
+                  </Link>
+                </>
+              )}
             </div>
           </nav>
         </div>

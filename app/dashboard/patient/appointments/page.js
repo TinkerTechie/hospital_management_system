@@ -10,6 +10,10 @@ export default function PatientAppointmentsPage() {
   const [activeTab, setActiveTab] = useState("upcoming");
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [rescheduleData, setRescheduleData] = useState({ date: "", time: "" });
+  const [rescheduling, setRescheduling] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -58,6 +62,54 @@ export default function PatientAppointmentsPage() {
       return apptDate < now;
     }
   });
+
+  const handleReschedule = (appointment) => {
+    setSelectedAppointment(appointment);
+    const apptDate = new Date(appointment.appointmentDate);
+    setRescheduleData({
+      date: apptDate.toISOString().split('T')[0],
+      time: appointment.time || "09:00"
+    });
+    setShowRescheduleModal(true);
+  };
+
+  const submitReschedule = async () => {
+    if (!rescheduleData.date || !rescheduleData.time) {
+      alert("Please select both date and time");
+      return;
+    }
+
+    setRescheduling(true);
+    try {
+      const res = await fetch(`/api/appointments/${selectedAppointment.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          appointmentDate: rescheduleData.date,
+          time: rescheduleData.time
+        })
+      });
+
+      if (res.ok) {
+        // Update local state
+        setAppointments(appointments.map(a =>
+          a.id === selectedAppointment.id
+            ? { ...a, appointmentDate: rescheduleData.date, time: rescheduleData.time }
+            : a
+        ));
+        setShowRescheduleModal(false);
+        alert("Appointment rescheduled successfully!");
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to reschedule appointment");
+      }
+    } catch (error) {
+      console.error("Error rescheduling appointment:", error);
+      alert("An error occurred");
+    } finally {
+      setRescheduling(false);
+    }
+  };
 
   const handleCancel = async (id) => {
     if (!confirm("Are you sure you want to cancel this appointment?")) return;
@@ -184,7 +236,10 @@ export default function PatientAppointmentsPage() {
                     <div className="flex md:flex-col justify-center gap-2 mt-4 md:mt-0 border-t md:border-t-0 md:border-l border-gray-100 dark:border-gray-700 pt-4 md:pt-0 md:pl-6">
                       {activeTab === "upcoming" ? (
                         <>
-                          <button className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors whitespace-nowrap">
+                          <button
+                            onClick={() => handleReschedule(appt)}
+                            className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors whitespace-nowrap"
+                          >
                             Reschedule
                           </button>
                           <button
@@ -207,6 +262,67 @@ export default function PatientAppointmentsPage() {
               ))
             )}
           </div>
+
+          {/* Reschedule Modal */}
+          {showRescheduleModal && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md">
+                <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Reschedule Appointment</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Select a new date and time for your appointment
+                  </p>
+                </div>
+
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      New Date
+                    </label>
+                    <input
+                      type="date"
+                      value={rescheduleData.date}
+                      onChange={(e) => setRescheduleData({ ...rescheduleData, date: e.target.value })}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all dark:text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      New Time
+                    </label>
+                    <input
+                      type="time"
+                      value={rescheduleData.time}
+                      onChange={(e) => setRescheduleData({ ...rescheduleData, time: e.target.value })}
+                      className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all dark:text-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-6 border-t border-gray-100 dark:border-gray-700 flex gap-3">
+                  <button
+                    onClick={() => setShowRescheduleModal(false)}
+                    className="flex-1 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={submitReschedule}
+                    disabled={rescheduling}
+                    className="flex-1 px-4 py-2 rounded-xl bg-teal-600 text-white hover:bg-teal-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
+                  >
+                    {rescheduling ? (
+                      <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    ) : (
+                      "Confirm Reschedule"
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </div>

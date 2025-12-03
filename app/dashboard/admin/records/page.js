@@ -26,7 +26,17 @@ export default function MedicalRecordsPage() {
             setDark(theme === "dark");
         }
         fetchRecords();
-    }, [currentPage, itemsPerPage, searchQuery, filters, sortColumn, sortDirection]);
+    }, [currentPage, itemsPerPage, sortColumn, sortDirection]);
+
+    // Reset to page 1 when search or filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, filters]);
+
+    // Fetch when page resets
+    useEffect(() => {
+        fetchRecords();
+    }, [currentPage]);
 
     const toggleDark = () => {
         const newTheme = !dark;
@@ -106,7 +116,7 @@ export default function MedicalRecordsPage() {
             label: "Patient",
             render: (row) => (
                 <div>
-                    <p className="font-medium text-gray-900 dark:text-white">{row.patient?.name || "N/A"}</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{row.patient?.fullName || "N/A"}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">ID: #{row.patient?.id}</p>
                 </div>
             ),
@@ -134,7 +144,7 @@ export default function MedicalRecordsPage() {
             label: "Doctor",
             render: (row) => (
                 <span className="text-sm text-gray-600 dark:text-gray-300">
-                    {row.doctor?.name ? `Dr. ${row.doctor.name}` : "N/A"}
+                    {row.doctor?.fullName ? `Dr. ${row.doctor.fullName}` : "N/A"}
                 </span>
             ),
         },

@@ -62,9 +62,13 @@ export async function GET(request) {
                     patient: {
                         select: {
                             id: true,
-                            name: true,
+                            fullName: true, // Use fullName as per schema
                             phone: true,
-                            email: true,
+                            user: {
+                                select: {
+                                    email: true
+                                }
+                            }
                         },
                     },
                 },

@@ -22,9 +22,20 @@ export default function DoctorPatientsPage() {
         fetchPatients();
     }, []);
 
-    const fetchPatients = async () => {
+    // Debounce search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchPatients(searchQuery);
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    const fetchPatients = async (query = "") => {
         try {
-            const res = await fetch('/api/doctor/patients');
+            setLoading(true);
+            const params = new URLSearchParams({ search: query });
+            const res = await fetch(`/api/doctor/patients?${params}`);
             if (res.ok) {
                 const data = await res.json();
                 setPatients(data.patients || []);
@@ -50,7 +61,7 @@ export default function DoctorPatientsPage() {
                 alert("Patient added successfully!");
                 setShowAddModal(false);
                 setNewPatient({ name: "", age: "", email: "", condition: "" });
-                fetchPatients(); // Refresh list
+                fetchPatients(searchQuery); // Refresh list
             } else {
                 const data = await res.json();
                 alert(data.error || "Failed to add patient");
@@ -63,10 +74,7 @@ export default function DoctorPatientsPage() {
         }
     };
 
-    const filteredPatients = patients.filter(patient =>
-        patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        patient.condition.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredPatients = patients;
 
     const container = {
         hidden: { opacity: 0 },
