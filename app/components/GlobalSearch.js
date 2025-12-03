@@ -48,6 +48,8 @@ const searchIndex = [
 export default function GlobalSearch({ isOpen, onClose }) {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState([]);
+    const [apiResults, setApiResults] = useState({ patients: [], doctors: [], nurses: [], appointments: [] });
+    const [loading, setLoading] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(0);
     const inputRef = useRef(null);
     const router = useRouter();
@@ -62,17 +64,18 @@ export default function GlobalSearch({ isOpen, onClose }) {
     // Handle keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (e) => {
+            const allResults = [...results, ...convertApiResults()];
             if (e.key === 'Escape') {
                 onClose();
             } else if (e.key === 'ArrowDown') {
                 e.preventDefault();
-                setSelectedIndex((prev) => (prev + 1) % results.length);
+                setSelectedIndex((prev) => (prev + 1) % allResults.length);
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
-                setSelectedIndex((prev) => (prev - 1 + results.length) % results.length);
-            } else if (e.key === 'Enter' && results.length > 0) {
+                setSelectedIndex((prev) => (prev - 1 + allResults.length) % allResults.length);
+            } else if (e.key === 'Enter' && allResults.length > 0) {
                 e.preventDefault();
-                handleNavigate(results[selectedIndex].url);
+                handleNavigate(allResults[selectedIndex].url);
             }
         };
 
@@ -81,9 +84,37 @@ export default function GlobalSearch({ isOpen, onClose }) {
         }
 
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen, results, selectedIndex, onClose]);
+    }, [isOpen, results, apiResults, selectedIndex, onClose]);
 
-    // Search function
+    // API Search
+    useEffect(() => {
+        const searchAPI = async () => {
+            if (!query.trim() || query.length < 2) {
+                setApiResults({ patients: [], doctors: [], nurses: [], appointments: [] });
+                return;
+            }
+
+            setLoading(true);
+            try {
+                const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&limit=5`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setApiResults(data.results || { patients: [], doctors: [], nurses: [], appointments: [] });
+                }
+            } catch (error) {
+                console.error("Search API error:", error);
+                setApiResults({ patients: [], doctors: [], nurses: [], appointments: [] });
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        // Debounce API calls
+        const timer = setTimeout(searchAPI, 300);
+        return () => clearTimeout(timer);
+    }, [query]);
+
+    // Static search function
     useEffect(() => {
         if (!query.trim()) {
             setResults([]);
@@ -121,6 +152,54 @@ export default function GlobalSearch({ isOpen, onClose }) {
         setSelectedIndex(0);
     }, [query]);
 
+    // Convert API results to display format
+    const convertApiResults = () => {
+        const converted = [];
+
+        apiResults.patients?.forEach(p => {
+            converted.push({
+                id: `patient-${p.id}`,
+                title: p.fullName,
+                category: 'Patient',
+                description: `${p.age ? p.age + ' yrs' : 'Age N/A'} • ${p.bloodGroup || 'Blood group N/A'} • Ward: ${p.assignedWard || 'N/A'}`,
+                url: `/dashboard/admin/patients?search=${p.fullName}`,
+            });
+        });
+
+        apiResults.doctors?.forEach(d => {
+            converted.push({
+                id: `doctor-${d.id}`,
+                title: `Dr. ${d.fullName}`,
+                category: 'Doctor',
+                description: `${d.specialization || 'Specialization N/A'} • ${d.department || 'Department N/A'}`,
+                url: `/dashboard/admin/doctors?search=${d.fullName}`,
+            });
+        });
+
+        apiResults.nurses?.forEach(n => {
+            converted.push({
+                id: `nurse-${n.id}`,
+                title: n.fullName,
+                category: 'Nurse',
+                description: `Ward: ${n.assignedWard || 'N/A'}`,
+                url: `/dashboard/admin/nurses?search=${n.fullName}`,
+            });
+        });
+
+        apiResults.appointments?.forEach(a => {
+            const date = new Date(a.appointmentDate).toLocaleDateString();
+            converted.push({
+                id: `appointment-${a.id}`,
+                title: `Appointment: ${a.patient?.fullName || 'Unknown'}`,
+                category: 'Appointment',
+                description: `Dr. ${a.doctor?.fullName || 'Unknown'} • ${date} • ${a.reason || 'No reason'}`,
+                url: `/dashboard/admin/appointments?search=${a.patient?.fullName}`,
+            });
+        });
+
+        return converted;
+    };
+
     const handleNavigate = (url) => {
         router.push(url);
         onClose();
@@ -128,7 +207,8 @@ export default function GlobalSearch({ isOpen, onClose }) {
     };
 
     // Group results by category
-    const groupedResults = results.reduce((acc, item) => {
+    const allResults = [...results, ...convertApiResults()];
+    const groupedResults = allResults.reduce((acc, item) => {
         if (!acc[item.category]) acc[item.category] = [];
         acc[item.category].push(item);
         return acc;
@@ -163,9 +243,12 @@ export default function GlobalSearch({ isOpen, onClose }) {
                             type="text"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Search services, doctors, emergency care, first aid..."
+                            placeholder="Search services, doctors, patients, appointments..."
                             className="flex-1 text-lg outline-none placeholder-gray-400"
                         />
+                        {loading && (
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-teal-600"></div>
+                        )}
                         <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
                             <X className="h-5 w-5 text-gray-500" />
                         </button>
@@ -173,7 +256,7 @@ export default function GlobalSearch({ isOpen, onClose }) {
 
                     {/* Results */}
                     <div className="max-h-[60vh] overflow-y-auto">
-                        {query && results.length === 0 && (
+                        {query && allResults.length === 0 && !loading && (
                             <div className="p-8 text-center text-gray-500">
                                 No results found for "{query}"
                             </div>
@@ -185,7 +268,7 @@ export default function GlobalSearch({ isOpen, onClose }) {
                                     {category}
                                 </h3>
                                 {items.map((item, index) => {
-                                    const globalIndex = results.indexOf(item);
+                                    const globalIndex = allResults.indexOf(item);
                                     return (
                                         <button
                                             key={item.id}
