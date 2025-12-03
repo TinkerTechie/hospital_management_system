@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { useInView } from "react-intersection-observer";
 import Navbar from "../components/shared/Navbar";
 import {
   FaHeart,
@@ -18,19 +17,58 @@ import {
   FaAmbulance,
 } from "react-icons/fa";
 
+// Prevent static generation
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default function AboutPage() {
   const [isMounted, setIsMounted] = useState(false);
-  const { ref: journeyRef, inView: journeyInView } = useInView({ triggerOnce: true, threshold: 0.2 });
-  const { ref: valuesRef, inView: valuesInView } = useInView({ triggerOnce: true, threshold: 0.2 });
-  const { ref: teamRef, inView: teamInView } = useInView({ triggerOnce: true, threshold: 0.2 });
+
+  // Initialize with safe defaults
+  const [journeyInView, setJourneyInView] = useState(true);
+  const [valuesInView, setValuesInView] = useState(true);
+  const [teamInView, setTeamInView] = useState(true);
+
+  // Refs for intersection observer
+  const journeyRef = useRef(null);
+  const valuesRef = useRef(null);
+  const teamRef = useRef(null);
 
   const logo = "/assets/logo.png";
   const doctorTeam = "/assets/doct2.jpg";
   const hospitalBuilding = "/assets/human1.jpg";
 
-  // Prevent hydration errors
+  // Prevent hydration errors and setup intersection observers
   useEffect(() => {
     setIsMounted(true);
+
+    // Only use IntersectionObserver on client side
+    if (typeof window !== 'undefined' && 'IntersectionObserver' in window) {
+      const observerOptions = { threshold: 0.2, triggerOnce: true };
+
+      const journeyObserver = new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) setJourneyInView(true);
+      }, observerOptions);
+
+      const valuesObserver = new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) setValuesInView(true);
+      }, observerOptions);
+
+      const teamObserver = new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) setTeamInView(true);
+      }, observerOptions);
+
+      if (journeyRef.current) journeyObserver.observe(journeyRef.current);
+      if (valuesRef.current) valuesObserver.observe(valuesRef.current);
+      if (teamRef.current) teamObserver.observe(teamRef.current);
+
+      return () => {
+        journeyObserver.disconnect();
+        valuesObserver.disconnect();
+        teamObserver.disconnect();
+      };
+    }
   }, []);
 
   const stats = [
