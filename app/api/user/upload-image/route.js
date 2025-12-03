@@ -2,13 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../../lib/db";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
-import fs from "fs";
-import path from "path";
-import { v4 as uuidv4 } from "uuid";
 
 export async function POST(req) {
     try {
-        // Get token from cookies (matching /api/nurse pattern)
+        // Get token from cookies
         const cookieStore = await cookies();
         const token = cookieStore.get("token")?.value;
 
@@ -17,6 +14,11 @@ export async function POST(req) {
         }
 
         // Verify JWT token
+        if (!process.env.JWT_SECRET) {
+            console.error("JWT_SECRET is not defined");
+            return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+        }
+
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const userId = decoded.id;
 
@@ -30,37 +32,38 @@ export async function POST(req) {
             return NextResponse.json({ error: "No image provided" }, { status: 400 });
         }
 
-        // Remove header from base64 string if present
-        const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
-        const buffer = Buffer.from(base64Data, "base64");
+        // Check if it's a URL or base64
+        let imageUrl;
 
-        // Ensure uploads directory exists
-        const uploadDir = path.join(process.cwd(), "public", "uploads");
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
+        if (image.startsWith('http://') || image.startsWith('https://')) {
+            // It's already a URL, use it directly
+            imageUrl = image;
+        } else if (image.startsWith('data:image')) {
+            // For base64 images in production, we need cloud storage
+            // For now, store the base64 directly (not recommended for large images)
+            // TODO: Integrate with Cloudinary, AWS S3, or similar service
+
+            // Temporary solution: Store base64 in database (works but not optimal)
+            imageUrl = image;
+
+            // Better solution would be:
+            // const uploadResult = await uploadToCloudinary(image);
+            // imageUrl = uploadResult.secure_url;
+        } else {
+            return NextResponse.json({ error: "Invalid image format" }, { status: 400 });
         }
-
-        // Generate unique filename
-        const filename = `${uuidv4()}.png`;
-        const filePath = path.join(uploadDir, filename);
-
-        // Save file
-        fs.writeFileSync(filePath, buffer);
-
-        const publicUrl = `/uploads/${filename}`;
 
         // Update user in database
         await prisma.user.update({
             where: { id: userId },
-            data: { image: publicUrl },
+            data: { image: imageUrl },
         });
 
-        // Also update specific role profiles if needed (optional, but good for consistency if they have separate image fields)
-        // For now, User.image is the source of truth.
-
-        return NextResponse.json({ success: true, imageUrl: publicUrl });
+        return NextResponse.json({ success: true, imageUrl });
     } catch (error) {
         console.error("Upload error:", error);
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
+        return NextResponse.json({
+            error: error.message || "Server error"
+        }, { status: 500 });
     }
 }

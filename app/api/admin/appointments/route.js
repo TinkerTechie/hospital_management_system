@@ -5,6 +5,12 @@ import { prisma } from "../../../../lib/db";
 
 export async function GET(request) {
     try {
+        // Validate JWT_SECRET exists
+        if (!process.env.JWT_SECRET) {
+            console.error("JWT_SECRET is not defined");
+            return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+        }
+
         const cookieStore = await cookies();
         const token = cookieStore.get("token");
 
@@ -119,6 +125,12 @@ export async function GET(request) {
 
 export async function POST(request) {
     try {
+        // Validate JWT_SECRET exists
+        if (!process.env.JWT_SECRET) {
+            console.error("JWT_SECRET is not defined");
+            return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+        }
+
         const cookieStore = await cookies();
         const token = cookieStore.get("token");
 
@@ -169,6 +181,12 @@ export async function POST(request) {
 
 export async function DELETE(request) {
     try {
+        // Validate JWT_SECRET exists
+        if (!process.env.JWT_SECRET) {
+            console.error("JWT_SECRET is not defined");
+            return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+        }
+
         const cookieStore = await cookies();
         const token = cookieStore.get("token");
 

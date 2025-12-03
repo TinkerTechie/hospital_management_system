@@ -70,7 +70,16 @@ export async function POST(req) {
 
     const { password: _, ...userSafe } = user;
 
-    // ⬅️ JWT ADDED BELOW
+    // Validate JWT_SECRET exists
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT_SECRET is not defined");
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      );
+    }
+
+    // Create JWT token
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,

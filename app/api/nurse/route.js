@@ -17,6 +17,12 @@ export async function GET(req) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        // Validate JWT_SECRET exists
+        if (!process.env.JWT_SECRET) {
+            console.error("JWT_SECRET is not defined");
+            return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+        }
+
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
             userId = decoded.id;

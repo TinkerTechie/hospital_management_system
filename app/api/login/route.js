@@ -30,7 +30,16 @@ export async function POST(req) {
       );
     }
 
-    // ⬅️ JWT ADDED BELOW
+    // Validate JWT_SECRET exists
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT_SECRET is not defined");
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Create JWT token
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
