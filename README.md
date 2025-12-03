@@ -1,156 +1,315 @@
-<<<<<<< HEAD
-# hospital_management_system
-=======
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
-1. Project Title
-MediCare Connect – Hospital Management System
-
-2. Problem Statement
-Hospitals face inefficiencies due to outdated systems — including manual data entry, poor inter-department communication, billing errors, and lack of centralized patient information.
-MediCare Connect aims to provide a secure, integrated, and automated digital platform to manage patients, appointments, billing, and records efficiently.
-
-3. System Architecture
-Architecture: Three-tier (Frontend → Backend → Database)
-Layer
-Technology
+🏥 Hospital Management System (Full Stack)
+A full-stack hospital management platform built with Next.js, Prisma, PostgreSQL, and JWT authentication, supporting robust role-based access for admin, nurses, and users.
+Now fully optimized for Render deployment with zero filesystem dependencies.
+🚀 Features
+👨‍⚕️ Admin Features
+Manage patients, appointments, billing & records
+Secure JWT-based authentication
+Full CRUD operations for medical data
+👩‍⚕️ Nurse Portal
+View assigned patients
+Manage vitals and reports
+Role-based data access & security
+👤 User Features
+Login / Signup
+Profile management
+Image upload support (URL / Base64)
+Cloud storage ready (Cloudinary/S3 integration optional)
+⚙️ System Features
+Prisma ORM with PostgreSQL
+Centralized authentication middleware
+Optimized for Render’s read-only filesystem
+Production-ready error handling & logging
+🛠️ Tech Stack
 Frontend
-React.js, React Router, Axios, TailwindCSS
+Next.js (App Router)
+React, TailwindCSS, Lucide Icons
 Backend
-Node.js, Express.js, Mongoose
+Next.js API Routes
+JWT Authentication
+Middleware-based token validation
 Database
-Mongodb
-Authentication
-JWT + bcrypt
-Hosting
-Frontend → Vercel, Backend → Render/Railway, DB → MongoDB Atlas
-
-
-4. Key Features
-Category
-Features
-Auth & Roles
-Secure login/signup, JWT-based, Admin/Doctor/Patient/Staff roles
-Patient Management
-Register, update, track medical history & insurance
-Appointments
-Book, reschedule, cancel appointments
-Doctors
-Manage schedules, fees, and availability
-Billing
-Generate invoices, track payments & insurance claims
-Records
-Upload/view medical reports & prescriptions
-Inventory
-Track supplies, stock alerts
-Reports
-
-
-Analytics dashboards, performance insights
-
-
-Search & Filter 
-Search: Admins and staff can search for patients, doctors, or appointments by name, ID, or department.
-Filtering: Users can filter doctors by specialization, patients by admission status, and appointments by date or status.
-Sorting: Records such as patients, doctors, and bills can be sorted by name, date, or amount for easier data analysis.
-Pagination: All large data lists (patients, doctors, appointments, billing records) will be paginated to improve performance and ensure a smooth user experience.
-
-
-
-
-
-
-5. Tech Stack
-Layer
-Technologies Used
-Frontend
-Next.js, React Router, Axios, TailwindCSS / Bootstrap
-Backend
-Node.js, Express.js
-Database
-MySQL
-Authentication
-JWT (JSON Web Tokens), bcrypt
-Testing
-Jest, Supertest, Cypress
-Hosting / Deployment
-Vercel (Frontend), Render/Railway (Backend), MongoDB Atlas (Database)
-Version Control
-Git & GitHub
-Tools
-Postman (API testing), VS Code, ESLint, Nodemon
-
-
-
-6. API Overview
-Endpoint
-Method
-Description
-Access
-/api/auth/signup
-POST
-Register user
-Public
-/api/auth/login
-POST
-Login user
-Public
-/api/patients
-GET
-Get patients
-Admin/Staff
-/api/appointments
-POST
-Create appointment
-Patient
-/api/doctors
-GET
-View doctors
-Public
-/api/billing
-POST
-Create bill
-Admin/Finance
-
-renderLink = "https://hospital-management-system-xx3n.onrender.com"
-databaseLink = "https://console.neon.tech/app/projects/bitter-butterfly-33052637"
-
-
-## Getting Started
-
-First, run the development server:
-
-```bash
+Prisma ORM
+PostgreSQL
+Deployment
+Render (Optimized for file-system restrictions)
+🧩 Fixes Implemented for Render Deployment
+1. Removed all filesystem operations
+Render uses a read-only filesystem — so all fs.writeFileSync, fs.mkdirSync, etc. were removed.
+The upload API now supports:
+Direct URLs
+Base64 strings
+Cloud-ready for S3 / Cloudinary
+2. Added environment variable validation
+Every route using JWT now checks JWT_SECRET.
+lib/db.js validates DATABASE_URL.
+3. Optimized production logging
+Prisma logs only errors
+Middleware logs disabled in production
+Cleaner, faster Render performance
+4. Better error handling
+Structured try/catch
+Clean HTTP status codes
+Prevents server crashes
+📦 Installation
+git clone https://github.com/your-username/hospital-management-system.git
+cd hospital-management-system
+npm install
+🔧 Environment Variables
+Create a .env file:
+DATABASE_URL=postgresql://user:password@host:5432/database
+JWT_SECRET=your_super_secret_key_minimum_32_characters_long
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NODE_ENV=development
+For Render, add the same variables in Dashboard → Environment.
+🗃️ Prisma Setup
+Generate Prisma Client:
+npx prisma generate
+Push schema to DB:
+npx prisma db push
+(Optional) Run migrations:
+npx prisma migrate deploy
+▶️ Running the Project
+Development
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Production Build
+npx prisma generate && npm run build
+npm start
+🚀 Render Deployment
+Build Command
+npx prisma generate && npx prisma migrate deploy && npm run build
+Start Command
+npm start
+Must-Have Environment Variables on Render:
+Variable	Required	Description
+DATABASE_URL	✅	PostgreSQL connection
+JWT_SECRET	✅	32+ character secret
+NODE_ENV	Optional	Set to production
+NEXT_PUBLIC_APP_URL	Optional	Your Render domain
+✔️ Deployment Checklist
+ All environment variables added
+ Prisma schema is up to date
+ JWT_SECRET is valid length
+ No filesystem operations in code
+ Image uploads work with URL/Base64
+ Build command includes prisma generate
+🐛 Common Errors & Fixes
+❌ JWT_SECRET is not defined
+Add JWT_SECRET in Render dashboard.
+❌ DATABASE_URL missing
+Add full PostgreSQL connection URL.
+❌ Prisma Client not generated
+Ensure build command includes:
+npx prisma generate
+❌ ENOENT filesystem errors
+You’re trying to write to disk — use Cloudinary/S3 instead.
+🌥️ Optional Enhancements
+1️⃣ Cloud Storage for Images
+Cloudinary setup recommended:
+npm install cloudinary
+2️⃣ Email Notifications
+Use SendGrid / Resend / AWS SES.
+3️⃣ Monitoring & Analytics
+Sentry
+LogRocket
+Render Logs
+4️⃣ Performance
+Redis caching
+Database indexes
+Query optimization
+📂 Modified Files (12)
+File	Purpose
+app/api/user/upload-image/route.js	Removed filesystem ops
+app/api/admin/*	Added JWT validation
+app/api/login / signup	Added JWT validation
+app/api/nurse/route.js	Security fix
+lib/db.js	DB validation + logging tweaks
+middleware.js	JWT secret validation
+RENDER_DEPLOYMENT_FIXES.md	Documentation
+scripts/validate-render.sh	Validation script
+🏁 Status
+All Render deployment issues fixed.
+Ready for production. 🚀
+If you want, I can also generate:
+✅ A project logo
+✅ A demo video script
+✅ A clean folder structure diagram
+✅ A badge-style GitHub header
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Just tell me!
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
-
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
-
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
-
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
+You said:
+I have to add this in my projects readme.md give me all the routes and professional readme.md 
+ChatGPT said:
+Great — here is a clean, professional, production-ready README.md including a full API ROUTES DOCUMENTATION SECTION for your Hospital Management System.
+This is structured exactly like top GitHub projects (e.g., real-world SaaS + API docs).
+🏥 Hospital Management System — Full Stack (Next.js + Prisma + PostgreSQL)
+A fully featured hospital management system built with Next.js App Router, Prisma, PostgreSQL, and secure JWT authentication, with separate portals for Admins, Nurses, and Users.
+The app is fully optimized for Render Deployment, using zero filesystem operations and strict environment variable validation.
+⭐ Features
+👨‍⚕️ Admin Portal
+Manage Patients
+Manage Appointments
+Manage Billing
+Manage Medical Records
+Role-based authentication
+👩‍⚕️ Nurse Portal
+View assigned patients
+Update vitals
+Record observations
+Limited access for security
+👤 User Portal
+Login / Signup
+Profile management
+Supports image upload (URL/Base64)
+Cloud-ready for S3/Cloudinary
+⚙️ System-Level Features
+Next.js API Routes
+Prisma ORM
+Centralized JWT middleware
+Secure environment variable validation
+Render-optimized deployment
+Zero filesystem write operations
+📍 API ROUTES DOCUMENTATION
+Below is a complete list of all your backend API endpoints.
+🔐 Auth Routes (/api)
+POST /api/login
+Authenticate user and return JWT.
+POST /api/signup
+Register a new user.
+👨‍⚕️ Admin Routes (/api/admin)
+All require valid JWT with admin role.
+GET /api/admin/patients
+Get all patients.
+POST /api/admin/patients
+Create a new patient.
+PUT /api/admin/patients
+Update patient details.
+DELETE /api/admin/patients
+Delete a patient.
+GET /api/admin/appointments
+Get all appointments.
+POST /api/admin/appointments
+Create a new appointment.
+DELETE /api/admin/appointments
+Delete an appointment.
+GET /api/admin/billing
+List all billing entries.
+POST /api/admin/billing
+Create billing record.
+GET /api/admin/records
+Get all medical records.
+POST /api/admin/records
+Create a new medical record.
+👩‍⚕️ Nurse Routes (/api/nurse)
+GET /api/nurse
+Get patients assigned to the nurse.
+(Uses JWT validation.)
+👤 User Routes (/api/user)
+POST /api/user/upload-image
+Upload user profile image.
+Supports:
+Direct URL
+Base64 data
+(No filesystem operations.)
+🧬 Core Internal Files
+middleware.js
+Validates JWT
+Enforces JWT_SECRET presence
+Production-safe logging
+lib/db.js
+Prisma client
+Validates DATABASE_URL
+Production logging optimization
+🧩 Render Deployment Fixes
+✔ Removed all filesystem operations
+Render uses read-only FS.
+Uploads now accept URL/Base64 only.
+✔ Added environment variable validation everywhere
+Routes fail early if:
+JWT_SECRET missing
+DATABASE_URL missing
+✔ Clean production logging
+Prisma logs only errors
+Middleware logs only in dev
+✔ Improved error handling
+Standard HTTP codes
+Prevent server crashes
+🚀 Tech Stack
+Frontend: Next.js, React, TailwindCSS
+Backend: Next.js API Routes, JWT
+DB: PostgreSQL, Prisma ORM
+Deployment: Render
+Icons: Lucide Icons
+⚙️ Installation
+git clone https://github.com/your-username/hospital-management-system.git
+cd hospital-management-system
+npm install
+🔧 Environment Variables
+Create .env:
+DATABASE_URL=postgresql://user:password@host:5432/database
+JWT_SECRET=your_super_secret_key_minimum_32_characters_long
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NODE_ENV=development
+🗃 Prisma Setup
+npx prisma generate
+npx prisma db push
+▶️ Running Locally
+Development
+npm run dev
+Production
+npx prisma generate && npm run build
+npm start
+🚀 Deploying to Render
+Build Command:
+npx prisma generate && npx prisma migrate deploy && npm run build
+Start Command:
+npm start
+Required Render Environment Variables
+Variable	Required	Description
+DATABASE_URL	✅	PostgreSQL URL
+JWT_SECRET	✅	32+ character secret key
+NODE_ENV	Optional	Set to production
+NEXT_PUBLIC_APP_URL	Optional	Render domain
+📌 Deployment Checklist
+ Prisma client generated
+ JWT_SECRET added
+ DATABASE_URL added
+ No filesystem operations
+ Build passes without warnings
+ API routes accessible
+🛑 Common Errors & Fixes
+❌ JWT_SECRET is not defined
+Add it in Render environment.
+❌ DATABASE_URL must be provided
+Use Render PostgreSQL connection.
+❌ Prisma Client not generated
+Add npx prisma generate to build command.
+❌ ENOENT filesystem error
+You are writing to disk — use Cloudinary instead.
+🌥️ Optional Enhancements
+(Not required but recommended.)
+Cloud Image Upload (Cloudinary / S3)
+npm install cloudinary
+Email Service
+SendGrid
+Resend
+AWS SES
+Monitoring
+Sentry
+LogRocket
+🗂 Modified Files Summary
+File	Description
+app/api/user/upload-image/route.js	Removed filesystem operations
+app/api/admin/*	Added JWT validation
+app/api/login/route.js	Added JWT validation
+app/api/signup/route.js	Added JWT validation
+app/api/nurse/route.js	Added JWT validation
+lib/db.js	DB validation + logging
+middleware.js	Secure JWT validation
+RENDER_DEPLOYMENT_FIXES.md	Docs
+scripts/validate-render.sh	Deployment validator
+🏁 Status
+⚡ The project is fully stable and production-ready — all Render issues fixed.
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
 >>>>>>> 6e50ae2 (Initial commit from Create Next App)
