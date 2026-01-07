@@ -1,4 +1,4 @@
-# 🏥 LifeCare HMS — Advanced Hospital Management System
+# 🏥 Medicare — Advanced Hospital Management System
 
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react)](https://reactjs.org/)
@@ -9,11 +9,11 @@
 
 ---
 
-![LifeCare HMS Hero](./public/hero.png)
+![Medicare Hero](./public/hero.png)
 
 ## 📌 Overview
 
-**LifeCare HMS** is a state-of-the-art, full-stack Hospital Management System designed for modern healthcare facilities. Built with **Next.js 15**, **React 19**, and **Prisma**, it provides a seamless, high-performance experience for patients, doctors, nurses, and administrators. 
+**Medicare** is a state-of-the-art, full-stack Hospital Management System designed for modern healthcare facilities. Built with **Next.js 15**, **React 19**, and **Prisma**, it provides a seamless, high-performance experience for patients, doctors, nurses, and administrators. 
 
 The system features **Glassmorphism UI**, **Framer Motion animations**, and **Role-Based Access Control (RBAC)** to ensure security and a premium user experience.
 
@@ -25,19 +25,19 @@ The system features **Glassmorphism UI**, **Framer Motion animations**, and **Ro
 *   **Complete Overview**: Real-time statistics on patients, doctors, and revenue.
 *   **User Management**: CRUD operations for Patients, Doctors, and Staff.
 *   **Billing & Finance**: Integrated billing system with invoice generation.
-*   **System Configuration**: Manage departments, services, and system settings.
+*   **Inventory & Alerts**: Manage hospital resources and broadcast urgent notifications.
 
 ### 👩‍⚕️ Nurse & Doctor Portals
 *   **Patient Vitals**: Real-time tracking and updating of patient health metrics.
 *   **Medical Records**: Secure management of history, prescriptions, and reports.
 *   **Appointment Scheduling**: Intuitive calendar for managing consultations.
-*   **Video Consulting**: Integrated tele-health capabilities for remote care.
+*   **Specialty Management**: Dedicated modules for Cardiology, Neurology, Pediatrics, and Orthopedics.
 
 ### 👤 Patient Experience
-*   **Personal Dashboard**: View upcoming appointments, medical history, and bills.
+*   **Personal Dashboard**: View upcoming appointments, medical history, and status updates.
 *   **Online Booking**: Easy-to-use interface for scheduling visits.
-*   **Digital Prescriptions**: Downloadable and viewable medical records.
-*   **Profile Management**: Update personal info and secure image uploads.
+*   **Digital Records**: download and view records, prescriptions, and test results.
+*   **Profile Management**: Secure profile updates and image uploads.
 
 ### ⚙️ Core Technical Features
 *   **JWT Authentication**: Secure session management with HTTP-only cookies.
@@ -64,7 +64,7 @@ The system features **Glassmorphism UI**, **Framer Motion animations**, and **Ro
 - **Database**: PostgreSQL
 - **ORM**: Prisma
 - **Auth**: JWT & NextAuth
-- **Emails**: Nodemailer
+- **Emails**: Nodemailer / SendGrid
 
 ---
 
@@ -106,31 +106,86 @@ The system features **Glassmorphism UI**, **Framer Motion animations**, and **Ro
    ```bash
    npm run dev
    ```
-   Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ---
 
 ## 📂 Project Structure
 
 ```text
-├── app/                # Next.js App Router (Pages & API)
-├── components/         # Reusable UI Components
-├── lib/               # Database & Utility configurations
-├── prisma/            # Database Schema & Migrations
-├── public/            # Static Assets
-└── styles/            # Global Styling
+├── app/
+│   ├── api/            # Complete API Implementation
+│   ├── dashboard/      # Role-based Dashboards (Admin, Doctor, Patient, Nurse)
+│   ├── auth/           # Login, Signup, Password Recovery
+│   └── components/     # High-quality UI Components
+├── lib/               # Shared logic & Database client
+├── prisma/            # Database Schema (PostgreSQL)
+├── public/            # Modern Assets & Images
+└── styles/            # Global Stylings & Glassmorphism
 ```
 
 ---
 
-## 📍 API Documentation (Overview)
+## 📍 API Documentation
 
-| Method | Route | Description | Auth |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/api/auth/login` | User Authentication | None |
-| `GET` | `/api/admin/patients` | Fetch All Patients | Admin |
-| `POST` | `/api/patient/book` | Create Appointment | Patient |
-| `PUT` | `/api/nurse/vitals` | Update Patient Stats | Nurse |
+### 🔐 Authentication & Profile
+| Method | Route | Description | 
+| :--- | :--- | :--- |
+| `POST` | `/api/login` | Check credentials & return JWT |
+| `POST` | `/api/signup` | Register new patient |
+| `POST` | `/api/forgot-password` | Initiate password recovery |
+| `POST` | `/api/reset-password` | Update password with token |
+| `GET` | `/api/user/profile` | Fetch authenticated user data |
+| `POST` | `/api/user/upload-image`| Upload profile picture (Base64/URL) |
+
+### 👨‍💼 Admin Operations
+| Method | Route | Description |
+| :--- | :--- | :--- |
+| `GET/POST` | `/api/admin/patients` | Manage patient database |
+| `GET/POST` | `/api/admin/doctors` | Manage medical staff |
+| `GET/POST` | `/api/admin/nurses` | Manage nursing staff |
+| `GET/POST` | `/api/admin/appointments` | Global appointment controller |
+| `GET/POST` | `/api/admin/billing` | Financial records & Invoicing |
+| `GET/POST` | `/api/admin/records` | Centralized medical record system |
+| `GET/POST` | `/api/admin/inventory` | Hospital resource management |
+| `POST` | `/api/admin/alerts` | Broadcast system-wide notifications |
+| `GET` | `/api/admin/reports/overview`| Analytics & Statistical reports |
+
+### 👩‍⚕️ Medical Staff (Doctors & Nurses)
+| Method | Route | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/doctor` | Doctor dashboard data |
+| `GET` | `/api/doctor/appointments` | Assigned patient consultations |
+| `GET` | `/api/doctor/patients` | List of patients under care |
+| `GET` | `/api/nurse` | Nurse dashboard data |
+| `PUT` | `/api/nurse/patients/[id]/vitals`| Update heart rate, BP, temperature |
+
+### 👤 Patient & Public Actions
+| Method | Route | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/patient` | My health overview |
+| `GET/POST` | `/api/appointments` | Book/View personal appointments |
+| `GET` | `/api/notifications` | Personal alerts & reminders |
+| `GET` | `/api/patient-updates` | Real-time recovery progress |
+| `GET` | `/api/doctors` | Public directory of available doctors |
+| `GET` | `/api/best-doctors` | Featured/Top-rated specialists |
+| `GET` | `/api/best-nurses` | Featured nursing staff |
+| `GET` | `/api/search` | Global search across departments |
+
+### 🏥 Specialties & Departments
+| Method | Route | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/cardiology/services` | Heart care services |
+| `GET` | `/api/neurology/services` | Brain & nerve care |
+| `GET` | `/api/pediatrics/services` | Child healthcare |
+| `GET` | `/api/orthopedics/services` | Bone & joint care |
+| `GET` | `/api/diagnostics/packages` | Health checkup packages |
+| `GET` | `/api/emergency/services` | Urgent care details |
+
+### ✉️ Utilities
+| Method | Route | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/email/send` | Generic email service |
+| `POST` | `/api/contact` | Contact form processing |
 
 ---
 
@@ -152,4 +207,4 @@ Contributions are what make the open source community such an amazing place to l
 
 ---
 
-<p align="center">Made with ❤️ for Modern Healthcare</p>
+<p align="center">Made with ❤️ for Modern Healthcare by TinkerTechie</p>
