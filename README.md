@@ -1,159 +1,155 @@
-🏥 Hospital Management System — Full Stack (Next.js + Prisma + PostgreSQL)
-A full-featured Hospital Management System built with Next.js App Router, Prisma, PostgreSQL, and JWT Authentication, including dedicated portals for Admins, Nurses, and Users.
-This project is fully optimized for Render Deployment, with secure environment variable validation and zero filesystem usage.
-⭐ Features
-👨‍⚕️ Admin Portal
-Manage Patients (CRUD)
-Manage Appointments
-Manage Medical Records
-Manage Billing
-Role-based authentication and access control
-👩‍⚕️ Nurse Portal
-View assigned patients
-Update vitals
-Add observations & notes
-👤 User Portal
-Login / Signup
-Profile management
-Image upload via URL/Base64
-Cloud storage ready (Cloudinary / AWS S3)
-⚙️ App-Level Features
-Centralized JWT middleware
-Prisma ORM with PostgreSQL
-Render-optimized: no filesystem writes
-Production logging & error handling enhancements
-📍 API ROUTES DOCUMENTATION
-🔐 Auth Routes (/api)
-POST /api/login
-User login → returns JWT.
-POST /api/signup
-User registration.
-👨‍⚕️ Admin Routes (/api/admin)
-All require admin-role JWT.
-Patients
-Method	Route	Description
-GET	/api/admin/patients	Fetch all patients
-POST	/api/admin/patients	Create a patient
-PUT	/api/admin/patients	Update a patient
-DELETE	/api/admin/patients	Delete a patient
-Appointments
-Method	Route	Description
-GET	/api/admin/appointments	Fetch all appointments
-POST	/api/admin/appointments	Create an appointment
-DELETE	/api/admin/appointments	Delete an appointment
-Billing
-Method	Route	Description
-GET	/api/admin/billing	Get billing records
-POST	/api/admin/billing	Create billing entry
-Medical Records
-Method	Route	Description
-GET	/api/admin/records	Fetch medical records
-POST	/api/admin/records	Create record
-👩‍⚕️ Nurse Route (/api/nurse)
-GET /api/nurse
-Fetch patients assigned to the nurse.
-👤 User Routes (/api/user)
-POST /api/user/upload-image
-Upload profile image using:
-Public Image URL
-Base64 encoded string
-No filesystem writes — Render compatible.
-🧩 Render Deployment Fixes
-✔ Removed filesystem operations
-Replaced with URL/Base64 storage.
-Cloud upload integration ready.
-✔ Validated environment variables
-Every protected route checks:
-JWT_SECRET
-DATABASE_URL
-✔ Optimized Prisma logging
-Only logs errors in production
-Speeds up Render performance
-✔ Improved error handling
-Standard HTTP response codes
-try/catch protection on all routes
-🛠️ Tech Stack
-Frontend
-Next.js (App Router)
-React
-Tailwind CSS
-Lucide Icons
-Backend
-Next.js API Routes
-JWT Authentication
-Middleware-based Authorization
-Database
-PostgreSQL
-Prisma ORM
-Deployment
-Render
-⚙️ Installation
-git clone https://github.com/your-username/hospital-management-system.git
-cd hospital-management-system
-npm install
-🔧 Environment Variables
-Create a .env file:
-DATABASE_URL=postgresql://user:password@host:5432/database
-JWT_SECRET=your_super_secret_key_minimum_32_characters_long
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-NODE_ENV=development
-🗃️ Prisma Setup
-npx prisma generate
-npx prisma db push
-Or for migrations:
-npx prisma migrate deploy
-▶️ Running the Project
-Development
-npm run dev
-Production
-npx prisma generate && npm run build
-npm start
-🚀 Deploying on Render
-Build Command
-npx prisma generate && npx prisma migrate deploy && npm run build
-Start Command
-npm start
-Required Environment Variables on Render
-Variable	Required	Description
-DATABASE_URL	✅	PostgreSQL connection
-JWT_SECRET	✅	32+ character secret key
-NODE_ENV	Optional	Set to production
-NEXT_PUBLIC_APP_URL	Optional	Render URL
-✔️ Deployment Checklist
- Prisma Client generated
- DATABASE_URL added
- JWT_SECRET is at least 32 characters
- Build completes on Render
- No filesystem operations remain
- API routes responding correctly
-🛑 Common Errors & Fixes
-❌ JWT_SECRET is not defined
-Add it in Render → Environment.
-❌ DATABASE_URL missing
-Set correct PostgreSQL URL.
-❌ Prisma Client not generated
-Add npx prisma generate to build command.
-❌ ENOENT: no such file or directory
-You are trying to write to the filesystem — disabled in production.
-🌥️ Optional Enhancements
-Image Storage (Recommended)
-Use Cloudinary or AWS S3:
-npm install cloudinary
-Email Services
-SendGrid
-Resend
-AWS SES
-Monitoring
-Sentry
-LogRocket
-📂 Key Modified Files (12 Total)
-File	Purpose
-app/api/user/upload-image/route.js	Removed filesystem usage
-app/api/admin/*	Added JWT_SECRET validation
-app/api/login/route.js	Validation added
-app/api/signup/route.js	Validation added
-app/api/nurse/route.js	Validation added
-middleware.js	Centralized JWT checks
-lib/db.js	DATABASE_URL validation
-RENDER_DEPLOYMENT_FIXES.md	Documentation
-scripts/validate-render.sh	Deployment validator
+# 🏥 LifeCare HMS — Advanced Hospital Management System
+
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react)](https://reactjs.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+[![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?style=for-the-badge&logo=prisma)](https://www.prisma.io/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-336791?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
+[![Deployment: Render](https://img.shields.io/badge/Deployment-Render-46E3B7?style=for-the-badge&logo=render)](https://render.com/)
+
+---
+
+![LifeCare HMS Hero](./public/hero.png)
+
+## 📌 Overview
+
+**LifeCare HMS** is a state-of-the-art, full-stack Hospital Management System designed for modern healthcare facilities. Built with **Next.js 15**, **React 19**, and **Prisma**, it provides a seamless, high-performance experience for patients, doctors, nurses, and administrators. 
+
+The system features **Glassmorphism UI**, **Framer Motion animations**, and **Role-Based Access Control (RBAC)** to ensure security and a premium user experience.
+
+---
+
+## ✨ Key Features
+
+### 👨‍💼 Admin Dashboard
+*   **Complete Overview**: Real-time statistics on patients, doctors, and revenue.
+*   **User Management**: CRUD operations for Patients, Doctors, and Staff.
+*   **Billing & Finance**: Integrated billing system with invoice generation.
+*   **System Configuration**: Manage departments, services, and system settings.
+
+### 👩‍⚕️ Nurse & Doctor Portals
+*   **Patient Vitals**: Real-time tracking and updating of patient health metrics.
+*   **Medical Records**: Secure management of history, prescriptions, and reports.
+*   **Appointment Scheduling**: Intuitive calendar for managing consultations.
+*   **Video Consulting**: Integrated tele-health capabilities for remote care.
+
+### 👤 Patient Experience
+*   **Personal Dashboard**: View upcoming appointments, medical history, and bills.
+*   **Online Booking**: Easy-to-use interface for scheduling visits.
+*   **Digital Prescriptions**: Downloadable and viewable medical records.
+*   **Profile Management**: Update personal info and secure image uploads.
+
+### ⚙️ Core Technical Features
+*   **JWT Authentication**: Secure session management with HTTP-only cookies.
+*   **Middleware Security**: Centralized authorization and route protection.
+*   **Responsive Design**: Fully optimized for Mobile, Tablet, and Desktop.
+*   **Prisma ORM**: Type-safe database queries with PostgreSQL.
+*   **Render Optimized**: Zero filesystem dependency, perfect for cloud deployment.
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+- **Framework**: Next.js 15 (App Router)
+- **Library**: React 19
+- **Styling**: Tailwind CSS 4.0
+- **Animations**: Framer Motion
+- **State Management**: Redux Toolkit
+- **Charts**: ApexCharts
+
+### Backend
+- **Runtime**: Node.js
+- **API**: Next.js API Routes
+- **Database**: PostgreSQL
+- **ORM**: Prisma
+- **Auth**: JWT & NextAuth
+- **Emails**: Nodemailer
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+ 
+- PostgreSQL database
+- npm / yarn / pnpm
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/hospital-management-system.git
+   cd hospital-management-system
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment Variables**
+   Create a `.env` file in the root directory and add the following:
+   ```env
+   DATABASE_URL="postgresql://user:password@host:5432/database"
+   JWT_SECRET="your_min_32_character_secret_key"
+   NEXT_PUBLIC_APP_URL="http://localhost:3000"
+   ```
+
+4. **Prisma Setup**
+   ```bash
+   npx prisma generate
+   npx prisma db push
+   ```
+
+5. **Run the development server**
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+---
+
+## 📂 Project Structure
+
+```text
+├── app/                # Next.js App Router (Pages & API)
+├── components/         # Reusable UI Components
+├── lib/               # Database & Utility configurations
+├── prisma/            # Database Schema & Migrations
+├── public/            # Static Assets
+└── styles/            # Global Styling
+```
+
+---
+
+## 📍 API Documentation (Overview)
+
+| Method | Route | Description | Auth |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/auth/login` | User Authentication | None |
+| `GET` | `/api/admin/patients` | Fetch All Patients | Admin |
+| `POST` | `/api/patient/book` | Create Appointment | Patient |
+| `PUT` | `/api/nurse/vitals` | Update Patient Stats | Nurse |
+
+---
+
+## 🛡️ License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🤝 Contributing
+
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+<p align="center">Made with ❤️ for Modern Healthcare</p>
