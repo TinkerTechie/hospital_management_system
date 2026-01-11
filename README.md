@@ -67,48 +67,6 @@ The system features **Glassmorphism UI**, **Framer Motion animations**, and **Ro
 - **Emails**: Nodemailer / SendGrid
 
 ---
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js 18+ 
-- PostgreSQL database
-- npm / yarn / pnpm
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-username/hospital-management-system.git
-   cd hospital-management-system
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Configure Environment Variables**
-   Create a `.env` file in the root directory and add the following:
-   ```env
-   DATABASE_URL="postgresql://user:password@host:5432/database"
-   JWT_SECRET="your_min_32_character_secret_key"
-   NEXT_PUBLIC_APP_URL="http://localhost:3000"
-   ```
-
-4. **Prisma Setup**
-   ```bash
-   npx prisma generate
-   npx prisma db push
-   ```
-
-5. **Run the development server**
-   ```bash
-   npm run dev
-   ```
-
----
-
 ## 📂 Project Structure
 
 ```text
@@ -187,11 +145,6 @@ The system features **Glassmorphism UI**, **Framer Motion animations**, and **Ro
 | `POST` | `/api/email/send` | Generic email service |
 | `POST` | `/api/contact` | Contact form processing |
 
----
-
-## 🛡️ License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
