@@ -1,7 +1,8 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu, X, Home, Info, Stethoscope, Phone, Calendar, ChevronDown, LogIn, UserPlus } from "lucide-react";
 
 export default function Navbar() {
