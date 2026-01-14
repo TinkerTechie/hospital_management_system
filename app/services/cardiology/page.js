@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -127,7 +128,7 @@ const ServiceModal = ({ service, onClose }) => {
 
                 <div className="h-64 relative">
                     <img src={service.image} alt={service.title} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-8">
+                    <div className="absolute inset-0 bg-linear-to-t from-black/70 to-transparent flex items-end p-8">
                         <h2 className="text-3xl font-bold text-white">{service.title}</h2>
                     </div>
                 </div>
@@ -146,7 +147,7 @@ const ServiceModal = ({ service, onClose }) => {
                             <ul className="space-y-3">
                                 {service.procedureSteps.map((step, i) => (
                                     <li key={i} className="flex items-start gap-3 text-gray-700 text-sm">
-                                        <span className="w-6 h-6 rounded-full bg-teal-200 text-teal-800 flex items-center justify-center text-xs font-bold flex-shrink-0">{i + 1}</span>
+                                        <span className="w-6 h-6 rounded-full bg-teal-200 text-teal-800 flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</span>
                                         {step}
                                     </li>
                                 ))}
@@ -362,7 +363,7 @@ export default function CardiologyPage() {
                             </p>
                             <ul className="space-y-6">
                                 <li className="flex items-start gap-4">
-                                    <div className="w-10 h-10 bg-teal-800 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <div className="w-10 h-10 bg-teal-800 rounded-full flex items-center justify-center shrink-0">
                                         <Activity className="h-5 w-5 text-teal-400" />
                                     </div>
                                     <div>
@@ -371,7 +372,7 @@ export default function CardiologyPage() {
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-4">
-                                    <div className="w-10 h-10 bg-teal-800 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <div className="w-10 h-10 bg-teal-800 rounded-full flex items-center justify-center shrink-0">
                                         <Activity className="h-5 w-5 text-teal-400" />
                                     </div>
                                     <div>
@@ -457,7 +458,7 @@ export default function CardiologyPage() {
                                         alt={doc.name}
                                         className="w-full h-full object-cover object-top transform group-hover:scale-105 transition-transform duration-500"
                                     />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
+                                    <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
                                         <span className="text-white font-medium text-sm">View Profile</span>
                                     </div>
                                 </div>

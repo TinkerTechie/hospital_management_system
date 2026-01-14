@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 // GET - Fetch reviews for a specific department
 export async function GET(req, { params }) {
     try {
-        const { name } = params;
+        const { name } = await params;
         const departmentName = decodeURIComponent(name);
 
         // Fetch department reviews

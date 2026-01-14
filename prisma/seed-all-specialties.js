@@ -81,15 +81,66 @@ async function main() {
     const cardiologyConditions = [
         {
             conditionId: "coronary-artery-disease",
-            name: "Coronary Artery Disease",
-            description: "Narrowing or blockage of coronary arteries due to plaque buildup.",
-            symptoms: ["Chest pain (angina)", "Shortness of breath", "Fatigue", "Heart palpitations"],
+            name: "Coronary Artery Disease (CAD)",
+            description: "Narrowing or blockage of coronary arteries due to plaque buildup, reducing blood flow to the heart.",
+            symptoms: ["Chest pain (angina)", "Shortness of breath", "Fatigue", "Heart attack"],
             diagnosis: "ECG, stress test, coronary angiography",
             treatment: "Lifestyle changes, medications, angioplasty, bypass surgery",
-            prevention: "Healthy diet, regular exercise, no smoking, manage blood pressure",
+            prevention: "Healthy diet, exercise, quit smoking, control cholesterol and blood pressure",
             image: "https://images.unsplash.com/photo-1628348068343-c6a848d2b6dd?auto=format&fit=crop&w=800&q=80"
+        },
+        {
+            conditionId: "heart-failure",
+            name: "Heart Failure",
+            description: "A condition in which the heart cannot pump enough blood to meet the body's needs.",
+            symptoms: ["Breathlessness", "Swelling in legs", "Rapid heartbeat", "Fatigue"],
+            diagnosis: "Echocardiogram, BNP test, chest X-ray",
+            treatment: "Medications, lifestyle changes, implantable devices, surgery",
+            prevention: "Control blood pressure, treat diabetes, avoid alcohol and smoking",
+            image: "https://images.unsplash.com/photo-1588776813677-77a1c2a1c1ab?auto=format&fit=crop&w=800&q=80"
+        },
+        {
+            conditionId: "arrhythmia",
+            name: "Cardiac Arrhythmia",
+            description: "Irregular heartbeat caused by abnormal electrical signals in the heart.",
+            symptoms: ["Palpitations", "Dizziness", "Fainting", "Chest discomfort"],
+            diagnosis: "ECG, Holter monitoring, electrophysiology study",
+            treatment: "Medication, catheter ablation, pacemaker, ICD",
+            prevention: "Avoid stimulants, manage stress, treat underlying heart disease",
+            image: "https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&w=800&q=80"
+        },
+        {
+            conditionId: "hypertension",
+            name: "Hypertension (High Blood Pressure)",
+            description: "Persistently high pressure in the arteries that increases risk of heart attack and stroke.",
+            symptoms: ["Headache", "Blurred vision", "Chest pain", "Often asymptomatic"],
+            diagnosis: "Blood pressure monitoring, ECG, kidney function tests",
+            treatment: "Antihypertensive medications, diet, exercise",
+            prevention: "Low-salt diet, regular exercise, weight control",
+            image: "https://images.unsplash.com/photo-1579684385180-1ea67fbc3faa?auto=format&fit=crop&w=800&q=80"
+        },
+        {
+            conditionId: "valvular-heart-disease",
+            name: "Valvular Heart Disease",
+            description: "Damage or defect in one or more heart valves affecting blood flow.",
+            symptoms: ["Shortness of breath", "Fatigue", "Heart murmur", "Swelling"],
+            diagnosis: "Echocardiography, cardiac MRI, catheterization",
+            treatment: "Valve repair, valve replacement, medications",
+            prevention: "Early treatment of infections, regular heart checkups",
+            image: "https://images.unsplash.com/photo-1603398938378-e54a7e6d7c91?auto=format&fit=crop&w=800&q=80"
+        },
+        {
+            conditionId: "cardiomyopathy",
+            name: "Cardiomyopathy",
+            description: "Disease of the heart muscle making it harder for the heart to pump blood.",
+            symptoms: ["Breathlessness", "Dizziness", "Irregular heartbeat", "Chest pain"],
+            diagnosis: "Echocardiogram, MRI, genetic testing",
+            treatment: "Medications, implantable devices, heart transplant in severe cases",
+            prevention: "Manage infections, control alcohol intake, genetic screening",
+            image: "https://images.unsplash.com/photo-1580281657521-7d65c46a55c8?auto=format&fit=crop&w=800&q=80"
         }
     ];
+
 
     for (const condition of cardiologyConditions) {
         await prisma.cardiologyCondition.upsert({

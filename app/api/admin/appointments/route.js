@@ -62,19 +62,7 @@ export async function GET(request) {
                         select: {
                             id: true,
                             fullName: true,
-                            // phone: true, // Patient has phone? Let's check schema. No, User has phone? Or Patient?
-                            // Schema: Patient has no phone. User has no phone?
-                            // User model: name, email, image.
-                            // Doctor model: phone.
-                            // Nurse model: phone.
-                            // Patient model: no phone.
-                            // Wait, let's check schema again.
-                            // Patient model: fullName, age, bloodGroup, medicalHistory, assignedWard.
-                            // User model: email.
-                            // So Patient has NO phone.
-                            // We should remove phone from selection or select from User if added?
-                            // User schema: email, image. No phone.
-                            // So we can't fetch phone for patient.
+    
                             user: {
                                 select: {
                                     email: true,

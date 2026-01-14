@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -65,7 +66,7 @@ export default function AboutClient() {
             };
         }
     }, []);
-
+    
     const stats = [
         { icon: FaUsers, value: "50,000+", label: "Patients Treated" },
         { icon: FaUserMd, value: "150+", label: "Expert Doctors" },

@@ -151,7 +151,74 @@ const DoctorSelectionStep = ({ bookingData, setBookingData, doctors, loading }) 
   </motion.div>
 );
 
-// ... (Step 3, 4, 5 remain same)
+// Step 3: Date Selection
+const DateSelectionStep = ({ bookingData, setBookingData }) => (
+  <motion.div
+    initial={{ opacity: 0, x: 20 }}
+    animate={{ opacity: 1, x: 0 }}
+    exit={{ opacity: 0, x: -20 }}
+  >
+    <h2 className="text-2xl font-bold text-gray-900 mb-6">Select Date</h2>
+    <AppointmentCalendar
+      selectedDate={bookingData.date}
+      onDateSelect={(date) => setBookingData({ ...bookingData, date })}
+    />
+  </motion.div>
+);
+
+// Step 4: Time Selection
+const TimeSelectionStep = ({ bookingData, setBookingData }) => (
+  <motion.div
+    initial={{ opacity: 0, x: 20 }}
+    animate={{ opacity: 1, x: 0 }}
+    exit={{ opacity: 0, x: -20 }}
+  >
+    <h2 className="text-2xl font-bold text-gray-900 mb-6">Select Time Slot</h2>
+    <TimeSlotPicker
+      selectedTime={bookingData.time}
+      onTimeSelect={(time) => setBookingData({ ...bookingData, time })}
+      selectedDate={bookingData.date}
+    />
+  </motion.div>
+);
+
+// Step 5: Patient Details
+const PatientDetailsStep = ({ bookingData, setBookingData }) => (
+  <motion.div
+    initial={{ opacity: 0, x: 20 }}
+    animate={{ opacity: 1, x: 0 }}
+    exit={{ opacity: 0, x: -20 }}
+    className="space-y-6"
+  >
+    <h2 className="text-2xl font-bold text-gray-900 mb-6">Patient Details</h2>
+
+    <input
+      type="text"
+      placeholder="Phone Number"
+      value={bookingData.phone}
+      onChange={(e) => setBookingData({ ...bookingData, phone: e.target.value })}
+      className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+    />
+
+    <input
+      type="text"
+      placeholder="City"
+      value={bookingData.city}
+      onChange={(e) => setBookingData({ ...bookingData, city: e.target.value })}
+      className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+    />
+
+    <textarea
+      placeholder="Reason for Visit"
+      value={bookingData.reason}
+      onChange={(e) => setBookingData({ ...bookingData, reason: e.target.value })}
+      rows={4}
+      className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+    />
+  </motion.div>
+);
+
+
 
 // Step 6: Confirmation
 const ConfirmationStep = ({ bookingData, handleSubmit }) => (
